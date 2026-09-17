@@ -1,13 +1,13 @@
 {
   "name": "formmemory",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Smart local form autofill and job application assistant for Firefox and Chrome",
   "main": "background.js",
   "scripts": {
     "build": "node build.js",
     "package": "node package-extension.js",
     "test:syntax": "node -c background.js content.js popup.js firefox/background.js firefox/content.js firefox/popup.js chrome/background.js chrome/content.js chrome/popup.js",
-    "push": "git add . && git commit -m \"update FormMemory\" && git push origin main"
+    "push": "git add . && git commit -m \"update FormMemory\" && git -c http.sslBackend=schannel push origin main"
   },
   "keywords": [
     "firefox-extension",
