@@ -1,0 +1,434 @@
+/* FormMemory - Content Script Styles */
+/* Minimal flat dropdown, floating job fill pill, and prompt banner */
+
+:root {
+  --formmemory-bg: #ffffff;
+  --formmemory-border: #d0d7de;
+  --formmemory-text: #1f2328;
+  --formmemory-text-secondary: #656d76;
+  --formmemory-hover-bg: #f6f8fa;
+  --formmemory-active-bg: #0969da;
+  --formmemory-active-text: #ffffff;
+  --formmemory-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  --formmemory-scrollbar: #d0d7de;
+  --formmemory-badge-bg: #eaeef2;
+  --formmemory-badge-text: #57606a;
+  --formmemory-primary-btn-bg: #0969da;
+  --formmemory-primary-btn-text: #ffffff;
+  --formmemory-subtle-btn-bg: #f6f8fa;
+  --formmemory-subtle-btn-border: #d0d7de;
+  --formmemory-key-badge-bg: #dafbe1;
+  --formmemory-key-badge-text: #1a7f37;
+  --formmemory-action-bg: #f0f8ff;
+  --formmemory-action-text: #0969da;
+  --formmemory-action-border: #d0e8ff;
+  --formmemory-danger-text: #cf222e;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --formmemory-bg: #1e1e1e;
+    --formmemory-border: #383838;
+    --formmemory-text: #e1e1e1;
+    --formmemory-text-secondary: #8b949e;
+    --formmemory-hover-bg: #2d2d2d;
+    --formmemory-active-bg: #1f6feb;
+    --formmemory-active-text: #ffffff;
+    --formmemory-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
+    --formmemory-scrollbar: #484f58;
+    --formmemory-badge-bg: #2d333b;
+    --formmemory-badge-text: #adbac7;
+    --formmemory-primary-btn-bg: #1f6feb;
+    --formmemory-primary-btn-text: #ffffff;
+    --formmemory-subtle-btn-bg: #2d2d2d;
+    --formmemory-subtle-btn-border: #444c56;
+    --formmemory-key-badge-bg: #1b472e;
+    --formmemory-key-badge-text: #7ee787;
+    --formmemory-action-bg: #162638;
+    --formmemory-action-text: #58a6ff;
+    --formmemory-action-border: #1f4268;
+    --formmemory-danger-text: #ff7b72;
+  }
+}
+
+/* Suggestions Dropdown */
+.formmemory-dropdown {
+  position: absolute;
+  z-index: 2147483647;
+  box-sizing: border-box;
+  background: var(--formmemory-bg);
+  border: 1px solid var(--formmemory-border);
+  border-radius: 6px;
+  box-shadow: var(--formmemory-shadow);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--formmemory-text);
+  max-height: 240px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  min-width: 190px;
+  padding: 4px 0;
+  margin: 0;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.formmemory-dropdown::-webkit-scrollbar {
+  width: 6px;
+}
+
+.formmemory-dropdown::-webkit-scrollbar-thumb {
+  background-color: var(--formmemory-scrollbar);
+  border-radius: 3px;
+}
+
+.formmemory-dropdown-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 7px 12px;
+  cursor: pointer;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  transition: background-color 0.1s ease, color 0.1s ease;
+  gap: 8px;
+  position: relative;
+}
+
+.formmemory-item-content {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+}
+
+.formmemory-item-meta {
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 10px;
+  background: var(--formmemory-badge-bg);
+  color: var(--formmemory-badge-text);
+  font-weight: 500;
+  flex-shrink: 0;
+}
+
+.formmemory-item-badge-pwd {
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 10px;
+  background: var(--formmemory-key-badge-bg);
+  color: var(--formmemory-key-badge-text);
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.formmemory-item-delete {
+  display: none;
+  background: none;
+  border: none;
+  color: var(--formmemory-text-secondary);
+  font-size: 14px;
+  padding: 0 4px;
+  cursor: pointer;
+  line-height: 1;
+  border-radius: 3px;
+  margin-left: 4px;
+  flex-shrink: 0;
+}
+
+.formmemory-dropdown-item:hover .formmemory-item-delete {
+  display: inline-block;
+}
+
+.formmemory-item-delete:hover {
+  color: var(--formmemory-danger-text);
+  background: rgba(207, 34, 46, 0.1);
+}
+
+.formmemory-dropdown-item:hover,
+.formmemory-dropdown-item.formmemory-item-highlighted {
+  background-color: var(--formmemory-hover-bg);
+  color: var(--formmemory-text);
+}
+
+.formmemory-dropdown-item.formmemory-item-active {
+  background-color: var(--formmemory-active-bg);
+  color: var(--formmemory-active-text);
+}
+
+/* Special Action Item (e.g. Password Generator, Autofill Entire Form) */
+.formmemory-dropdown-action {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background-color: var(--formmemory-action-bg);
+  color: var(--formmemory-action-text);
+  font-weight: 600;
+  font-size: 12px;
+  border-bottom: 1px solid var(--formmemory-border);
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+
+.formmemory-dropdown-action:hover {
+  opacity: 0.85;
+}
+
+/* Autofill Remaining Fields Prompt Banner */
+.formmemory-autofill-prompt {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  z-index: 2147483647;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--formmemory-bg);
+  border: 1px solid var(--formmemory-border);
+  box-shadow: var(--formmemory-shadow);
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-size: 13px;
+  color: var(--formmemory-text);
+  animation: formmemory-slide-in 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.formmemory-autofill-prompt-text {
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.formmemory-autofill-prompt-btn {
+  background: var(--formmemory-primary-btn-bg);
+  color: #ffffff;
+  border: none;
+  border-radius: 5px;
+  padding: 5px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.formmemory-autofill-prompt-btn:hover {
+  opacity: 0.9;
+}
+
+.formmemory-autofill-prompt-close {
+  background: none;
+  border: none;
+  color: var(--formmemory-text-secondary);
+  font-size: 16px;
+  cursor: pointer;
+  padding: 0 4px;
+  line-height: 1;
+}
+
+.formmemory-autofill-prompt-close:hover {
+  color: var(--formmemory-text);
+}
+
+/* Floating "Fill Job App" Quick-Fill Pill */
+.formmemory-job-pill {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 2147483640;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--formmemory-bg);
+  border: 1px solid var(--formmemory-border);
+  box-shadow: var(--formmemory-shadow);
+  border-radius: 24px;
+  padding: 8px 16px;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--formmemory-text);
+  cursor: pointer;
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease;
+  user-select: none;
+}
+
+.formmemory-job-pill:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+}
+
+.formmemory-job-pill-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  padding: 0;
+}
+
+.formmemory-job-pill-badge {
+  background: var(--formmemory-primary-btn-bg);
+  color: #ffffff;
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 8px;
+  font-weight: 700;
+}
+
+.formmemory-job-pill-close {
+  background: none;
+  border: none;
+  font-size: 14px;
+  color: var(--formmemory-text-secondary);
+  cursor: pointer;
+  padding: 0 2px;
+  line-height: 1;
+  margin-left: 6px;
+}
+
+.formmemory-job-pill-close:hover {
+  color: var(--formmemory-text);
+}
+
+/* Save Form Prompt Banner */
+.formmemory-prompt-banner {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  z-index: 2147483647;
+  box-sizing: border-box;
+  background: var(--formmemory-bg);
+  border: 1px solid var(--formmemory-border);
+  border-radius: 8px;
+  box-shadow: var(--formmemory-shadow);
+  padding: 14px 16px;
+  max-width: 330px;
+  width: calc(100vw - 32px);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  color: var(--formmemory-text);
+  animation: formmemory-slide-in 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes formmemory-slide-in {
+  from {
+    transform: translateY(-16px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.formmemory-prompt-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.formmemory-prompt-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--formmemory-text);
+}
+
+.formmemory-prompt-close {
+  background: none;
+  border: none;
+  color: var(--formmemory-text-secondary);
+  font-size: 16px;
+  cursor: pointer;
+  padding: 0 4px;
+  line-height: 1;
+}
+
+.formmemory-prompt-close:hover {
+  color: var(--formmemory-text);
+}
+
+.formmemory-prompt-body {
+  font-size: 12px;
+  color: var(--formmemory-text-secondary);
+  margin-bottom: 12px;
+  line-height: 1.4;
+}
+
+.formmemory-prompt-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.formmemory-prompt-btn {
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 6px 12px;
+  border-radius: 5px;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: opacity 0.15s ease, background-color 0.15s ease;
+}
+
+.formmemory-prompt-btn-primary {
+  background-color: var(--formmemory-primary-btn-bg);
+  color: var(--formmemory-primary-btn-text);
+}
+
+.formmemory-prompt-btn-subtle {
+  background-color: var(--formmemory-subtle-btn-bg);
+  border-color: var(--formmemory-subtle-btn-border);
+  color: var(--formmemory-text);
+}
+
+.formmemory-prompt-btn-never {
+  background: none;
+  border: none;
+  color: var(--formmemory-text-secondary);
+  font-size: 11px;
+  padding: 6px 4px;
+  margin-right: auto;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.formmemory-prompt-btn-never:hover {
+  color: var(--formmemory-danger-text);
+}
+
+/* Toast Notification */
+.formmemory-toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #1f2328;
+  color: #ffffff;
+  padding: 8px 18px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  z-index: 2147483647;
+  font-family: system-ui, -apple-system, sans-serif;
+  pointer-events: none;
+  animation: formmemory-toast-fade 2s ease forwards;
+}
+
+@keyframes formmemory-toast-fade {
+  0% { opacity: 0; transform: translate(-50%, 10px); }
+  15% { opacity: 1; transform: translate(-50%, 0); }
+  80% { opacity: 1; transform: translate(-50%, 0); }
+  100% { opacity: 0; transform: translate(-50%, -10px); }
+}

@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FormMemory</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="container">
+    <header class="header">
+      <div class="title-wrap">
+        <h1 class="title">FormMemory</h1>
+        <span class="badge" id="headerBadge">Job Edition</span>
+      </div>
+      <button id="quickFillHeaderBtn" class="btn btn-primary-compact" title="1-Click Fill Job Application on Active Tab (Alt+Shift+J)">
+        Fill Job
+      </button>
+    </header>
+
+    <!-- Navigation Tabs -->
+    <nav class="nav-tabs">
+      <button class="tab-btn active" data-tab="tabJob">Job Profile</button>
+      <button class="tab-btn" data-tab="tabSites">Saved Sites</button>
+      <button class="tab-btn" data-tab="tabSettings">Settings & Backup</button>
+    </nav>
+
+    <!-- TAB 1: JOB PROFILE -->
+    <section class="tab-content active" id="tabJob">
+      <div class="job-intro">
+        Fill these details once. FormMemory auto-detects and fills Greenhouse, Lever, Workday, Ashby, and all job portals!
+      </div>
+      <form id="jobProfileForm" class="job-form">
+        <div class="section-title">Personal Information</div>
+        <div class="form-row">
+          <div class="field-half">
+            <label>First Name</label>
+            <input type="text" id="job_firstName" placeholder="Aryan">
+          </div>
+          <div class="field-half">
+            <label>Last Name</label>
+            <input type="text" id="job_lastName" placeholder="Singh">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Full Name</label>
+          <input type="text" id="job_fullName" placeholder="Aryan Singh">
+        </div>
+
+        <div class="form-row">
+          <div class="field-half">
+            <label>Email</label>
+            <input type="email" id="job_email" placeholder="aryan@example.com">
+          </div>
+          <div class="field-half">
+            <label>Phone Number</label>
+            <input type="tel" id="job_phone" placeholder="+1 (555) 019-2834">
+          </div>
+        </div>
+
+        <div class="section-title">Professional & Experience</div>
+        <div class="form-row">
+          <div class="field-half">
+            <label>Current Company</label>
+            <input type="text" id="job_company" placeholder="Google / Freelance">
+          </div>
+          <div class="field-half">
+            <label>Current Job Title</label>
+            <input type="text" id="job_jobTitle" placeholder="Software Engineer">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="field-half">
+            <label>Total Experience (Years)</label>
+            <input type="text" id="job_experienceYears" placeholder="3">
+          </div>
+          <div class="field-half">
+            <label>Notice Period</label>
+            <input type="text" id="job_noticePeriod" placeholder="Immediate / 15 Days">
+          </div>
+        </div>
+
+        <div class="section-title">Links & Portfolio</div>
+        <div class="form-group">
+          <label>LinkedIn URL</label>
+          <input type="url" id="job_linkedin" placeholder="https://linkedin.com/in/username">
+        </div>
+        <div class="form-group">
+          <label>GitHub URL</label>
+          <input type="url" id="job_github" placeholder="https://github.com/username">
+        </div>
+        <div class="form-group">
+          <label>Portfolio / Personal Website</label>
+          <input type="url" id="job_portfolio" placeholder="https://myportfolio.dev">
+        </div>
+
+        <div class="section-title">Location & Work Eligibility</div>
+        <div class="form-row">
+          <div class="field-half">
+            <label>City</label>
+            <input type="text" id="job_city" placeholder="San Francisco">
+          </div>
+          <div class="field-half">
+            <label>State / Region</label>
+            <input type="text" id="job_state" placeholder="California">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Work Authorization</label>
+          <select id="job_workAuthorization">
+            <option value="Yes">Legally authorized to work without sponsorship (Yes)</option>
+            <option value="No">Requires visa sponsorship (No)</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Require Visa Sponsorship in future?</label>
+          <select id="job_visaSponsorship">
+            <option value="No">No</option>
+            <option value="Yes">Yes</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Short Cover Letter / Summary</label>
+          <textarea id="job_coverLetter" rows="2" placeholder="Passionate software engineer with expertise in web apps..."></textarea>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-block">Save Job Profile</button>
+      </form>
+    </section>
+
+    <!-- TAB 2: SAVED SITES -->
+    <section class="tab-content" id="tabSites">
+      <div class="search-bar">
+        <input type="text" id="searchInput" placeholder="Search saved sites..." autocomplete="off">
+      </div>
+      <div class="sites-container" id="sitesContainer">
+        <div class="empty-state" id="emptyState">
+          No saved form data yet.
+        </div>
+        <ul class="sites-list" id="sitesList"></ul>
+      </div>
+      <div class="sites-actions">
+        <button id="clearAllBtn" class="btn btn-danger-subtle btn-block">Clear All Stored Form Memory</button>
+      </div>
+    </section>
+
+    <!-- TAB 3: SETTINGS, BLACKLIST & BACKUP -->
+    <section class="tab-content" id="tabSettings">
+      <div class="settings-section">
+        <div class="section-title">Domain Blacklist ("Never for this site")</div>
+        <div class="form-row">
+          <input type="text" id="blacklistInput" placeholder="e.g. bank.com" style="flex:1;">
+          <button id="addBlacklistBtn" class="btn btn-subtle">Add</button>
+        </div>
+        <ul id="blackclassList" class="tag-list"></ul>
+      </div>
+
+      <div class="settings-section">
+        <div class="section-title">Data Backup & Migration</div>
+        <p class="settings-desc">Export or restore all your saved form histories, credentials, and job profiles as a local JSON file.</p>
+        <div class="form-row" style="gap:8px;">
+          <button id="exportBtn" class="btn btn-subtle" style="flex:1;">Export Backup</button>
+          <label class="btn btn-subtle" style="flex:1; text-align:center; cursor:pointer;">
+            Import Backup
+            <input type="file" id="importFileInput" accept=".json" style="display:none;">
+          </label>
+        </div>
+      </div>
+
+      <div class="settings-section">
+        <div class="section-title">Job Portal Floating Button</div>
+        <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:12px; color:var(--text-primary);">
+          <input type="checkbox" id="showJobPillCheckbox" checked style="cursor:pointer; width:auto;">
+          <span>Show floating "Fill Job App" button on job portals</span>
+        </label>
+      </div>
+
+      <div class="settings-section">
+        <div class="section-title">Keyboard Shortcuts</div>
+        <p class="settings-desc"><kbd>Alt</kbd> + <kbd>Shift</kbd> + <kbd>J</kbd> instantly autofills matching job application fields on any page.</p>
+      </div>
+    </section>
+
+    <footer class="footer">
+      <span class="status-text" id="statusText">Stored locally on your device</span>
+    </footer>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

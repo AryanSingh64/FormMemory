@@ -1,34 +1,45 @@
 # FormMemory
 
-A lightweight Firefox extension that remembers what you type in forms and auto-fills job applications in one click.
+A lightweight, privacy-friendly browser extension for Firefox and Google Chrome (also works on Brave, Edge, and Opera) that remembers what you type in forms and auto-fills job applications in one click.
 
-Everything stays right on your computer in your local browser storage. No accounts, no external servers, no tracking, and no internet requests.
+Everything stays right on your computer in your local browser storage. No accounts, no external servers, no tracking, and zero internet requests.
 
 ---
 
 ## What does it do?
 
 - **1-Click Job Applications**: Sick of typing the same name, email, phone, LinkedIn URL, and work authorization on every single job board? Fill out your info once in the extension popup, and when you open a job application (Workday, Greenhouse, Lever, Ashby, etc.), hit `Alt + Shift + J` or click the floating button to fill the whole page at once.
-- **Smart Form Memory**: As you type in regular forms, it remembers your entries (names, addresses, usernames). Next time you click that field, a clean little dropdown appears with your most-used values at the top.
+- **Smart Form Memory**: As you type in regular forms, it remembers your entries (names, addresses, usernames). Next time you click that field, a clean dropdown appears with your most-used values at the top.
 - **Links Emails & Passwords**: When you save login info, it pairs your email and password together. Click your email, and it fills the password automatically.
 - **Password Generator**: Click into any password field and you can generate a strong 16-character password on the spot.
-- **Delete Mistakes Easily**: Saved a typo? Hover over the suggestion in the dropdown and click `x` to delete it immediately.
+- **Delete Mistakes Easily**: Saved a typo? Hover over the suggestion in the dropdown and click [x] to delete it immediately.
 - **Site Blacklist**: Want it to ignore your banking site or internal company portal? Turn it off for that specific domain with one click.
 - **Backup Your Data**: You can download a JSON backup of all your saved info from the popup anytime, or import it on another computer.
 
 ---
 
-## How to install it in Firefox (takes 10 seconds)
+## How to install it in Google Chrome / Brave / Edge
 
-1. Open Firefox and type this into your address bar:
+1. Open Chrome and navigate to:
+   ```text
+   chrome://extensions
+   ```
+2. Turn on the **"Developer mode"** toggle in the top-right corner.
+3. Click the **"Load unpacked"** button in the top-left corner.
+4. Select the `chrome` folder from this project.
+5. That is it! Click the puzzle icon in Chrome toolbar and pin FormMemory.
+
+---
+
+## How to install it in Firefox
+
+1. Open Firefox and navigate to:
    ```text
    about:debugging#/runtime/this-firefox
    ```
 2. Click the button that says **"Load Temporary Add-on..."**.
-3. Go into this folder (`FormMemory`) and select the `manifest.json` file.
-4. That's it! FormMemory will show up in your toolbar.
-
-*(Tip: Click the puzzle piece icon on your top-right toolbar and pin FormMemory so you can easily click it).*
+3. Select `firefox/manifest.json` (or any file inside the `firefox` folder).
+4. Done! Pin FormMemory in your toolbar so you can access it easily.
 
 ---
 
@@ -47,21 +58,22 @@ Everything stays right on your computer in your local browser storage. No accoun
 
 ---
 
-## Project Files
+## Project Structure
 
-- `manifest.json`: Firefox extension setup file
-- `content.js`: The script that handles auto-filling and form detection on websites
-- `content.css`: Minimal styling for dropdowns and buttons (matches your browser's dark/light theme)
-- `popup.html` / `popup.js` / `popup.css`: The popup where you edit your job profile and manage saved sites
-- `background.js`: Handles keyboard shortcuts like `Alt + Shift + J`
-- `test_form.html`: A test page you can open in Firefox to try out all the features safely
-- `package-extension.js`: Helper script to zip the extension for sharing or publishing
+This repository provides separate, ready-to-load builds for each browser:
+
+- `chrome/`: The Chrome Manifest V3 version (configured with background `service_worker`).
+- `firefox/`: The Firefox Manifest V3 version (configured with background `scripts` and Gecko ID).
+- `test_form.html`: A safe test form with all kinds of inputs to test autofill and memory locally.
+- `build.js`: Compiles and syncs shared core files into both `firefox/` and `chrome/` targets.
+- `package-extension.js`: Builds standalone `.zip` packages for both Chrome and Firefox.
 
 ---
 
-## Commands
+## Developer Commands
 
 If you have Node.js installed, you can run:
 
-- `npm run package` - Zips up the extension into `formmemory-extension.zip` so you can send it to someone or upload it to GitHub releases.
-- `npm run test:syntax` - Quickly checks all JavaScript files to make sure there are no code errors.
+- `npm run build` - Synchronizes all files and builds both `firefox` and `chrome` versions.
+- `npm run package` - Builds and zips both extensions into `formmemory-chrome.zip` and `formmemory-firefox.zip`.
+- `npm run test:syntax` - Quickly checks all JavaScript files across root, Firefox, and Chrome builds to ensure zero syntax errors.

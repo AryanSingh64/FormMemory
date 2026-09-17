@@ -1,39 +1,37 @@
 /**
  * FormMemory Packager
- * Packages extension files into formmemory-extension.zip for GitHub releases or Firefox Add-ons.
+ * Packages extension files into browser-specific zips:
+ *  - formmemory-firefox.zip
+ *  - formmemory-chrome.zip
  */
 
 const fs = require('fs');
 const path = require('path');
 const { execSync } = require('child_process');
 
-const filesToInclude = [
-  'manifest.json',
-  'background.js',
-  'content.js',
-  'content.css',
-  'popup.html',
-  'popup.js',
-  'popup.css',
-  'icon.svg',
-  'icon-16.png',
-  'icon-48.png',
-  'icon-128.png',
-  'README.md'
-];
+// Run build first to ensure latest files are synced
+execSync('node build.js', { stdio: 'inherit' });
 
-const zipName = 'formmemory-extension.zip';
+function createZip(sourceDir, zipName) {
+  if (fs.existsSync(zipName)) {
+    fs.unlinkSync(zipName);
+  }
 
-// Remove old zip if present
-if (fs.existsSync(zipName)) {
-  fs.unlinkSync(zipName);
+  try {
+    // Compress all files inside sourceDir into zipName
+    execSync(`powershell -Command "Compress-Archive -Path '${sourceDir}\\*' -DestinationPath '${zipName}' -Force"`);
+    console.log(`[FormMemory] Successfully created ${zipName} from ./${sourceDir}`);
+  } catch (err) {
+    console.error(`[FormMemory] Error creating ${zipName}:`, err.message);
+  }
 }
 
-try {
-  // Use PowerShell Compress-Archive on Windows
-  const fileList = filesToInclude.filter(f => fs.existsSync(f)).join(', ');
-  execSync(`powershell -Command "Compress-Archive -Path ${fileList} -DestinationPath ${zipName} -Force"`);
-  console.log(`Successfully created ${zipName}! Ready to upload or share.`);
-} catch (err) {
-  console.error('Error creating zip archive:', err.message);
+createZip('firefox', 'formmemory-firefox.zip');
+createZip('chrome', 'formmemory-chrome.zip');
+
+// Also keep formmemory-extension.zip (defaults to firefox package) for backwards compatibility
+if (fs.existsSync('formmemory-firefox.zip')) {
+  fs.copyFileSync('formmemory-firefox.zip', 'formmemory-extension.zip');
 }
+
+console.log('[FormMemory] All browser packages generated successfully!');
