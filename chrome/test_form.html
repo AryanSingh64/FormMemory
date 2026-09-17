@@ -169,6 +169,45 @@
         </div>
       </div>
 
+      <div class="form-group">
+        <label for="candidate_gender">Gender / Pronouns</label>
+        <input type="text" id="candidate_gender" name="gender" placeholder="e.g. He/Him or Male">
+      </div>
+
+      <!-- Address & Location -->
+      <div class="form-group">
+        <label for="street_address">Street Address (Line 1)</label>
+        <input type="text" id="street_address" name="address_line1" placeholder="123 Innovation Way">
+      </div>
+
+      <div class="form-group">
+        <label for="address_line2">Apartment / Suite (Line 2)</label>
+        <input type="text" id="address_line2" name="address_line2" placeholder="Apt 4B">
+      </div>
+
+      <div class="form-row">
+        <div class="field-half">
+          <label for="location_city">City</label>
+          <input type="text" id="location_city" name="location_city" placeholder="City">
+        </div>
+        <div class="field-half">
+          <label for="location_state">State / Region / Province</label>
+          <input type="text" id="location_state" name="location_state" placeholder="State">
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="field-half">
+          <label for="postal_code">Postal / PIN Code</label>
+          <input type="text" id="postal_code" name="pincode" placeholder="e.g. 560001 or 94105">
+        </div>
+        <div class="field-half">
+          <label for="country_name">Country</label>
+          <input type="text" id="country_name" name="country" placeholder="e.g. India or United States">
+        </div>
+      </div>
+
+      <!-- Professional & Experience -->
       <div class="form-row">
         <div class="field-half">
           <label for="current_company">Current Company / Organization</label>
@@ -182,6 +221,73 @@
 
       <div class="form-row">
         <div class="field-half">
+          <label for="experience_years">Total Experience (Years)</label>
+          <input type="text" id="experience_years" name="years_of_experience" placeholder="e.g. 3">
+        </div>
+        <div class="field-half">
+          <label for="notice_period">Notice Period</label>
+          <input type="text" id="notice_period" name="notice_period" placeholder="e.g. Immediate / 15 Days">
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="field-half">
+          <label for="current_ctc">Current Salary / CTC</label>
+          <input type="text" id="current_ctc" name="current_salary" placeholder="e.g. 12 LPA or $90,000">
+        </div>
+        <div class="field-half">
+          <label for="expected_ctc">Expected Salary / CTC</label>
+          <input type="text" id="expected_ctc" name="expected_salary" placeholder="e.g. 18 LPA or $120,000">
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="field-half">
+          <label for="earliest_start">Earliest Start Date</label>
+          <input type="text" id="earliest_start" name="start_date" placeholder="Immediately / 2 Weeks">
+        </div>
+        <div class="field-half">
+          <label for="work_mode">Preferred Work Mode</label>
+          <select id="work_mode" name="work_mode">
+            <option value="">Select an option...</option>
+            <option value="Remote">Remote</option>
+            <option value="Hybrid">Hybrid</option>
+            <option value="On-site">On-site</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Education & Academics -->
+      <div class="form-group">
+        <label for="university_name">University / College</label>
+        <input type="text" id="university_name" name="university" placeholder="e.g. IIT Delhi / Stanford University">
+      </div>
+
+      <div class="form-row">
+        <div class="field-half">
+          <label for="degree_name">Degree</label>
+          <input type="text" id="degree_name" name="degree" placeholder="e.g. B.Tech / Bachelor's / Master's">
+        </div>
+        <div class="field-half">
+          <label for="major_study">Major / Field of Study</label>
+          <input type="text" id="major_study" name="major" placeholder="e.g. Computer Science">
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="field-half">
+          <label for="grad_year">Graduation Year</label>
+          <input type="text" id="grad_year" name="graduation_year" placeholder="e.g. 2024">
+        </div>
+        <div class="field-half">
+          <label for="candidate_gpa">GPA / CGPA / %</label>
+          <input type="text" id="candidate_gpa" name="gpa" placeholder="e.g. 8.5 / 10">
+        </div>
+      </div>
+
+      <!-- Links -->
+      <div class="form-row">
+        <div class="field-half">
           <label for="linkedin_profile">LinkedIn Profile URL</label>
           <input type="url" id="linkedin_profile" name="linkedin_profile" placeholder="https://linkedin.com/in/username">
         </div>
@@ -191,22 +297,18 @@
         </div>
       </div>
 
-      <div class="form-group">
-        <label for="portfolio_website">Portfolio / Personal Website</label>
-        <input type="url" id="portfolio_website" name="portfolio_website" placeholder="https://yourportfolio.dev">
-      </div>
-
       <div class="form-row">
         <div class="field-half">
-          <label for="location_city">City</label>
-          <input type="text" id="location_city" name="location_city" placeholder="City">
+          <label for="portfolio_website">Portfolio / Personal Website</label>
+          <input type="url" id="portfolio_website" name="portfolio_website" placeholder="https://yourportfolio.dev">
         </div>
         <div class="field-half">
-          <label for="location_state">State / Region</label>
-          <input type="text" id="location_state" name="location_state" placeholder="State">
+          <label for="twitter_handle">Twitter / X Profile</label>
+          <input type="url" id="twitter_handle" name="twitter" placeholder="https://x.com/username">
         </div>
       </div>
 
+      <!-- Screening & Legal -->
       <div class="form-group">
         <label for="work_authorization">Are you legally authorized to work?</label>
         <select id="work_authorization" name="work_authorization">
@@ -223,6 +325,37 @@
           <option value="No">No</option>
           <option value="Yes">Yes</option>
         </select>
+      </div>
+
+      <div class="form-row">
+        <div class="field-half">
+          <label for="veteran_status">Veteran Status</label>
+          <select id="veteran_status" name="veteran_status">
+            <option value="">Select an option...</option>
+            <option value="I am not a veteran">I am not a veteran</option>
+            <option value="Yes, I am a veteran">Yes, I am a veteran</option>
+            <option value="Decline to state">Decline to state</option>
+          </select>
+        </div>
+        <div class="field-half">
+          <label for="disability_status">Disability Status</label>
+          <select id="disability_status" name="disability_status">
+            <option value="">Select an option...</option>
+            <option value="No, I do not have a disability">No, I do not have a disability</option>
+            <option value="Yes, I have a disability">Yes, I have a disability</option>
+            <option value="Decline to state">Decline to state</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="referral_source">How did you hear about this role?</label>
+        <input type="text" id="referral_source" name="referral_source" placeholder="e.g. LinkedIn / Referral">
+      </div>
+
+      <div class="form-group">
+        <label for="key_skills">Key Skills & Technologies</label>
+        <input type="text" id="key_skills" name="skills" placeholder="e.g. React, Node.js, Python, TypeScript">
       </div>
 
       <div class="form-group">

@@ -14,10 +14,21 @@ function initPopup() {
   const jobProfileForm = document.getElementById('jobProfileForm');
   const quickFillHeaderBtn = document.getElementById('quickFillHeaderBtn');
   const jobFieldIds = [
-    'firstName', 'lastName', 'fullName', 'email', 'phone',
+    // Personal
+    'firstName', 'lastName', 'fullName', 'email', 'phone', 'gender',
+    // Address & Location
+    'address', 'addressLine2', 'city', 'state', 'postalCode', 'country',
+    // Professional & Experience
     'company', 'jobTitle', 'experienceYears', 'noticePeriod',
-    'linkedin', 'github', 'portfolio', 'city', 'state',
-    'workAuthorization', 'visaSponsorship', 'coverLetter'
+    'currentSalary', 'expectedSalary', 'startDate', 'workMode',
+    // Education & Academics
+    'university', 'degree', 'major', 'gradYear', 'gpa',
+    // Links & Social
+    'linkedin', 'github', 'portfolio', 'twitter',
+    // Work Eligibility & Screening
+    'workAuthorization', 'visaSponsorship', 'veteranStatus', 'disabilityStatus', 'referralSource',
+    // Skills & Summary
+    'skills', 'coverLetter'
   ];
 
   // Sites Elements

@@ -47,8 +47,16 @@ Everything stays right on your computer in your local browser storage. No accoun
 
 ### For Job Applications
 1. Click the FormMemory icon in your toolbar.
-2. Under the **Job Profile** tab, put in your details: your name, contact info, current company, LinkedIn, GitHub, portfolio link, and work sponsorship answers. Click **Save Job Profile**.
-3. Open any job application page (like Greenhouse, Lever, Workday, or the included `test_form.html`).
+2. Under the **Job Profile** tab, put in your details:
+   - **Personal**: Name, Email, Phone, Gender/Pronouns
+   - **Location**: Street Address, Apartment, City, State, PIN / Postal Code, Country
+   - **Experience**: Current Company, Job Title, Total Experience, Notice Period, Current CTC, Expected CTC, Start Date, Work Mode
+   - **Education**: College / University, Degree, Major, Graduation Year, GPA
+   - **Links**: LinkedIn, GitHub, Portfolio Website, Twitter / X
+   - **Screening**: Work Authorization, Visa Sponsorship, Veteran Status, Disability Status, Referral Source
+   - **Skills & Summary**: Key Skills (comma-separated), Cover Letter / Notes
+   Click **Save Job Profile**.
+3. Open any job application page (like Greenhouse, Lever, Workday, Ashby, or the included `test_form.html`).
 4. Press `Alt + Shift + J` on your keyboard, or click the **"Fill Job App"** button at the bottom of the page. The entire form fills up immediately.
 
 ### For Normal Forms & Passwords

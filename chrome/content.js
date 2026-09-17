@@ -946,26 +946,54 @@
    * Map of ATS Field Heuristics (matches Workday, Greenhouse, Lever, Ashby, BambooHR, etc.)
    */
   const JOB_FIELD_RULES = [
+    // Personal
     { key: 'firstName', regex: /first.?name|fname|given.?name/i },
     { key: 'lastName', regex: /last.?name|lname|surname|family.?name/i },
     { key: 'fullName', regex: /full.?name|your.?name|candidate.?name|^name$/i },
     { key: 'email', regex: /email|e-mail/i },
     { key: 'phone', regex: /phone|mobile|cell|contact.?number|telephone/i },
+    { key: 'gender', regex: /gender|pronoun|sex/i },
+
+    // Address & Location
+    { key: 'addressLine2', regex: /address.?line.?2|line.?2|apt|suite|unit|flat/i },
+    { key: 'address', regex: /address.?line.?1|line.?1|street|mailing.?address|^address$/i },
+    { key: 'city', regex: /city|town/i },
+    { key: 'state', regex: /state|region|province/i },
+    { key: 'postalCode', regex: /pincode|pin.?code|postal|zip|zip.?code/i },
+    { key: 'country', regex: /country|nationality/i },
+
+    // Professional & Experience
     { key: 'company', regex: /current.?company|company.?name|employer|organization/i },
     { key: 'jobTitle', regex: /job.?title|current.?title|current.?role|designation|headline/i },
+    { key: 'experienceYears', regex: /years.?of.?experience|experience.?years|total.?experience|work.?experience/i },
+    { key: 'noticePeriod', regex: /notice.?period|availability|available.?in/i },
+    { key: 'currentSalary', regex: /current.?(salary|ctc|pay|compensation)/i },
+    { key: 'expectedSalary', regex: /expected.?(salary|ctc|pay|compensation)|salary.?expectation|desired.?salary/i },
+    { key: 'startDate', regex: /start.?date|earliest.?start|joining.?date|when.?can.?you.?start/i },
+    { key: 'workMode', regex: /work.?mode|work.?type|remote.?preference|location.?preference/i },
+
+    // Education & Academics
+    { key: 'university', regex: /university|college|school|institution/i },
+    { key: 'degree', regex: /degree|highest.?education|qualification/i },
+    { key: 'major', regex: /major|field.?of.?study|specialization|discipline/i },
+    { key: 'gradYear', regex: /graduation.?year|grad.?year|completion.?year|end.?year/i },
+    { key: 'gpa', regex: /gpa|cgpa|percentage|grades/i },
+
+    // Links & Social
     { key: 'linkedin', regex: /linkedin|linked.?in/i },
     { key: 'github', regex: /github|git.?hub/i },
     { key: 'portfolio', regex: /portfolio|personal.?site|website|web.?page|blog/i },
-    { key: 'twitter', regex: /twitter|x.?handle/i },
-    { key: 'city', regex: /city/i },
-    { key: 'state', regex: /state|region|province/i },
-    { key: 'postalCode', regex: /zip|postal|pincode/i },
-    { key: 'address', regex: /address|street/i },
-    { key: 'experienceYears', regex: /years.?of.?experience|experience.?years|total.?experience/i },
-    { key: 'noticePeriod', regex: /notice.?period|availability|available.?in/i },
-    { key: 'expectedSalary', regex: /expected.?salary|expected.?ctc|compensation|current.?ctc/i },
+    { key: 'twitter', regex: /twitter|x.?handle|x.?profile/i },
+
+    // Work Eligibility & Screening
     { key: 'workAuthorization', regex: /authorized.?to.?work|work.?authorization|eligible.?to.?work/i },
     { key: 'visaSponsorship', regex: /sponsorship|visa.?sponsorship|require.?sponsorship/i },
+    { key: 'veteranStatus', regex: /veteran/i },
+    { key: 'disabilityStatus', regex: /disability/i },
+    { key: 'referralSource', regex: /how.?did.?you.?hear|referral.?source|source/i },
+
+    // Summary & Skills
+    { key: 'skills', regex: /skills|technologies|key.?skills|tech.?stack/i },
     { key: 'coverLetter', regex: /cover.?letter|summary|about.?yourself|notes/i }
   ];
 
@@ -991,8 +1019,10 @@
 
     for (const rule of JOB_FIELD_RULES) {
       if (rule.regex.test(signature)) {
-        // Special case: don't confuse firstName with fullName
-        if (rule.key === 'fullName' && /first/i.test(signature)) continue;
+        // Special case: don't confuse firstName or lastName with fullName
+        if (rule.key === 'fullName' && /(first|last)/i.test(signature)) continue;
+        // Special case: don't confuse address line 1 with line 2
+        if (rule.key === 'address' && /(line.?2|apt|suite|unit)/i.test(signature)) continue;
         return rule.key;
       }
     }
@@ -1149,9 +1179,11 @@
 
     // Specific fields that distinguish a real job application from generic login/contact forms
     const DISTINCTIVE_JOB_KEYS = new Set([
-      'company', 'jobTitle', 'linkedin', 'github', 'portfolio',
-      'experienceYears', 'noticePeriod', 'expectedSalary',
-      'workAuthorization', 'visaSponsorship', 'coverLetter'
+      'company', 'jobTitle', 'linkedin', 'github', 'portfolio', 'twitter',
+      'experienceYears', 'noticePeriod', 'currentSalary', 'expectedSalary',
+      'university', 'degree', 'major', 'gradYear',
+      'workAuthorization', 'visaSponsorship', 'veteranStatus', 'disabilityStatus',
+      'coverLetter', 'skills'
     ]);
 
     fields.forEach(el => {

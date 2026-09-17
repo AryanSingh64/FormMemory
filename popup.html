@@ -31,6 +31,7 @@
         Fill these details once. FormMemory auto-detects and fills Greenhouse, Lever, Workday, Ashby, and all job portals!
       </div>
       <form id="jobProfileForm" class="job-form">
+        <!-- 1. Personal Information -->
         <div class="section-title">Personal Information</div>
         <div class="form-row">
           <div class="field-half">
@@ -55,15 +56,50 @@
           </div>
           <div class="field-half">
             <label>Phone Number</label>
-            <input type="tel" id="job_phone" placeholder="+1 (555) 019-2834">
+            <input type="tel" id="job_phone" placeholder="+91 9876543210">
           </div>
         </div>
 
+        <div class="form-group">
+          <label>Gender / Pronouns</label>
+          <input type="text" id="job_gender" placeholder="Male / He/Him">
+        </div>
+
+        <!-- 2. Address & Location -->
+        <div class="section-title">Address & Location</div>
+        <div class="form-group">
+          <label>Street Address (Line 1)</label>
+          <input type="text" id="job_address" placeholder="123 Innovation Way">
+        </div>
+        <div class="form-group">
+          <label>Apartment / Suite / Line 2</label>
+          <input type="text" id="job_addressLine2" placeholder="Apt 4B">
+        </div>
+        <div class="form-row">
+          <div class="field-third">
+            <label>City</label>
+            <input type="text" id="job_city" placeholder="Bengaluru">
+          </div>
+          <div class="field-third">
+            <label>State / Province</label>
+            <input type="text" id="job_state" placeholder="Karnataka">
+          </div>
+          <div class="field-third">
+            <label>PIN / Zip Code</label>
+            <input type="text" id="job_postalCode" placeholder="560001">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Country</label>
+          <input type="text" id="job_country" placeholder="India">
+        </div>
+
+        <!-- 3. Professional & Experience -->
         <div class="section-title">Professional & Experience</div>
         <div class="form-row">
           <div class="field-half">
             <label>Current Company</label>
-            <input type="text" id="job_company" placeholder="Google / Freelance">
+            <input type="text" id="job_company" placeholder="Current Company / Freelance">
           </div>
           <div class="field-half">
             <label>Current Job Title</label>
@@ -78,11 +114,65 @@
           </div>
           <div class="field-half">
             <label>Notice Period</label>
-            <input type="text" id="job_noticePeriod" placeholder="Immediate / 15 Days">
+            <input type="text" id="job_noticePeriod" placeholder="Immediate / 15 Days / 30 Days">
           </div>
         </div>
 
-        <div class="section-title">Links & Portfolio</div>
+        <div class="form-row">
+          <div class="field-half">
+            <label>Current Salary / CTC</label>
+            <input type="text" id="job_currentSalary" placeholder="e.g. 12 LPA or $90,000">
+          </div>
+          <div class="field-half">
+            <label>Expected Salary / CTC</label>
+            <input type="text" id="job_expectedSalary" placeholder="e.g. 18 LPA or $120,000">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="field-half">
+            <label>Earliest Start Date</label>
+            <input type="text" id="job_startDate" placeholder="Immediately / 2 Weeks">
+          </div>
+          <div class="field-half">
+            <label>Preferred Work Mode</label>
+            <select id="job_workMode">
+              <option value="Remote">Remote</option>
+              <option value="Hybrid">Hybrid</option>
+              <option value="On-site">On-site</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- 4. Education & Academics -->
+        <div class="section-title">Education & Academics</div>
+        <div class="form-group">
+          <label>College / University</label>
+          <input type="text" id="job_university" placeholder="e.g. IIT Delhi / State University">
+        </div>
+        <div class="form-row">
+          <div class="field-half">
+            <label>Degree</label>
+            <input type="text" id="job_degree" placeholder="B.Tech / Bachelor's / Master's">
+          </div>
+          <div class="field-half">
+            <label>Major / Field of Study</label>
+            <input type="text" id="job_major" placeholder="Computer Science">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="field-half">
+            <label>Graduation Year</label>
+            <input type="text" id="job_gradYear" placeholder="2024">
+          </div>
+          <div class="field-half">
+            <label>GPA / CGPA / %</label>
+            <input type="text" id="job_gpa" placeholder="8.5 / 10 or 3.8 / 4.0">
+          </div>
+        </div>
+
+        <!-- 5. Links & Profiles -->
+        <div class="section-title">Links & Profiles</div>
         <div class="form-group">
           <label>LinkedIn URL</label>
           <input type="url" id="job_linkedin" placeholder="https://linkedin.com/in/username">
@@ -95,19 +185,13 @@
           <label>Portfolio / Personal Website</label>
           <input type="url" id="job_portfolio" placeholder="https://myportfolio.dev">
         </div>
-
-        <div class="section-title">Location & Work Eligibility</div>
-        <div class="form-row">
-          <div class="field-half">
-            <label>City</label>
-            <input type="text" id="job_city" placeholder="San Francisco">
-          </div>
-          <div class="field-half">
-            <label>State / Region</label>
-            <input type="text" id="job_state" placeholder="California">
-          </div>
+        <div class="form-group">
+          <label>Twitter / X Profile</label>
+          <input type="url" id="job_twitter" placeholder="https://x.com/username">
         </div>
 
+        <!-- 6. Work Eligibility & Compliance -->
+        <div class="section-title">Work Eligibility & Screening</div>
         <div class="form-group">
           <label>Work Authorization</label>
           <select id="job_workAuthorization">
@@ -124,9 +208,40 @@
           </select>
         </div>
 
+        <div class="form-row">
+          <div class="field-half">
+            <label>Veteran Status</label>
+            <select id="job_veteranStatus">
+              <option value="I am not a veteran">I am not a veteran</option>
+              <option value="Yes, I am a veteran">Yes, I am a veteran</option>
+              <option value="Decline to state">Decline to state</option>
+            </select>
+          </div>
+          <div class="field-half">
+            <label>Disability Status</label>
+            <select id="job_disabilityStatus">
+              <option value="No, I do not have a disability">No, I do not have a disability</option>
+              <option value="Yes, I have a disability">Yes, I have a disability</option>
+              <option value="Decline to state">Decline to state</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>How did you hear about this role?</label>
+          <input type="text" id="job_referralSource" placeholder="LinkedIn / Careers Page / Referral">
+        </div>
+
+        <!-- 7. Skills & Summary -->
+        <div class="section-title">Skills & Summary</div>
+        <div class="form-group">
+          <label>Key Skills (comma separated)</label>
+          <input type="text" id="job_skills" placeholder="JavaScript, React, Node.js, Python, SQL, Docker">
+        </div>
+
         <div class="form-group">
           <label>Short Cover Letter / Summary</label>
-          <textarea id="job_coverLetter" rows="2" placeholder="Passionate software engineer with expertise in web apps..."></textarea>
+          <textarea id="job_coverLetter" rows="3" placeholder="Passionate software engineer with expertise in building scalable web applications..."></textarea>
         </div>
 
         <button type="submit" class="btn btn-primary btn-block">Save Job Profile</button>
