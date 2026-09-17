@@ -146,29 +146,43 @@
 
         <!-- 4. Education & Academics -->
         <div class="section-title">Education & Academics</div>
-        <div class="form-group">
-          <label>College / University</label>
-          <input type="text" id="job_university" placeholder="e.g. IIT Delhi / State University">
+        <div class="form-row">
+          <div class="field-half">
+            <label>College / University</label>
+            <input type="text" id="job_university" placeholder="e.g. IIT Delhi / State University">
+          </div>
+          <div class="field-half">
+            <label>Roll No. / Student ID</label>
+            <input type="text" id="job_rollNo" placeholder="e.g. 21BCS045">
+          </div>
         </div>
         <div class="form-row">
           <div class="field-half">
-            <label>Degree</label>
-            <input type="text" id="job_degree" placeholder="B.Tech / Bachelor's / Master's">
+            <label>Degree / Course Name</label>
+            <input type="text" id="job_degree" placeholder="B.Tech-CS / Bachelor's / Master's">
           </div>
           <div class="field-half">
-            <label>Major / Field of Study</label>
+            <label>Major / Branch</label>
             <input type="text" id="job_major" placeholder="Computer Science">
           </div>
         </div>
         <div class="form-row">
-          <div class="field-half">
+          <div class="field-third">
             <label>Graduation Year</label>
             <input type="text" id="job_gradYear" placeholder="2024">
           </div>
-          <div class="field-half">
-            <label>GPA / CGPA / %</label>
-            <input type="text" id="job_gpa" placeholder="e.g. 5.4 or 8.5 (or 5.4/10)">
+          <div class="field-third">
+            <label>Graduation % / CGPA</label>
+            <input type="text" id="job_gpa" placeholder="e.g. 8.5 or 5.4/10">
           </div>
+          <div class="field-third">
+            <label>12th / Inter %</label>
+            <input type="text" id="job_twelfthMarks" placeholder="e.g. 85%">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>10th / SSC %</label>
+          <input type="text" id="job_tenthMarks" placeholder="e.g. 90%">
         </div>
 
         <!-- 5. Links & Profiles -->
@@ -230,6 +244,14 @@
         <div class="form-group">
           <label>How did you hear about this role?</label>
           <input type="text" id="job_referralSource" placeholder="LinkedIn / Careers Page / Referral">
+        </div>
+
+        <div class="form-group">
+          <label>Ready with Company Terms & Conditions?</label>
+          <select id="job_terms">
+            <option value="YES">YES</option>
+            <option value="No">No</option>
+          </select>
         </div>
 
         <!-- 7. Skills & Summary -->

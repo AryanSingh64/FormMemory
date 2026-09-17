@@ -22,11 +22,11 @@ function initPopup() {
     'company', 'jobTitle', 'experienceYears', 'noticePeriod',
     'currentSalary', 'expectedSalary', 'startDate', 'workMode',
     // Education & Academics
-    'university', 'degree', 'major', 'gradYear', 'gpa',
+    'university', 'rollNo', 'degree', 'major', 'gradYear', 'gpa', 'tenthMarks', 'twelfthMarks',
     // Links & Social
     'linkedin', 'github', 'portfolio', 'twitter',
     // Work Eligibility & Screening
-    'workAuthorization', 'visaSponsorship', 'veteranStatus', 'disabilityStatus', 'referralSource',
+    'workAuthorization', 'visaSponsorship', 'veteranStatus', 'disabilityStatus', 'referralSource', 'terms',
     // Skills & Summary
     'skills', 'coverLetter'
   ];

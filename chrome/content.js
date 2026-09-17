@@ -228,33 +228,76 @@
   }
 
   /**
-   * Find label text associated with the element.
+   * Find label text associated with the element (supports standard forms, Google Forms, Microsoft Forms, Typeform, etc.)
    */
   function getAssociatedLabelText(el) {
+    if (!el) return '';
+
+    // 1. Parent <label>
     const parentLabel = el.closest('label');
     if (parentLabel) {
       const text = parentLabel.innerText || parentLabel.textContent || '';
       if (text.trim()) return text.trim();
     }
 
+    // 2. <label for="id">
     if (el.id) {
-      const forLabel = document.querySelector(`label[for="${CSS.escape(el.id)}"]`);
-      if (forLabel) {
-        const text = forLabel.innerText || forLabel.textContent || '';
-        if (text.trim()) return text.trim();
-      }
+      try {
+        const forLabel = document.querySelector(`label[for="${CSS.escape(el.id)}"]`);
+        if (forLabel) {
+          const text = forLabel.innerText || forLabel.textContent || '';
+          if (text.trim()) return text.trim();
+        }
+      } catch (e) {}
     }
 
+    // 3. aria-label
     const ariaLabel = el.getAttribute('aria-label');
     if (ariaLabel && ariaLabel.trim()) return ariaLabel.trim();
 
+    // 4. aria-labelledby (handles space-separated IDs like Google Forms "i1 i4")
     const ariaLabelledBy = el.getAttribute('aria-labelledby');
     if (ariaLabelledBy) {
-      const labelledEl = document.getElementById(ariaLabelledBy);
-      if (labelledEl) {
-        const text = labelledEl.innerText || labelledEl.textContent || '';
-        if (text.trim()) return text.trim();
+      const ids = ariaLabelledBy.trim().split(/\s+/);
+      const parts = [];
+      for (const id of ids) {
+        const labelledEl = document.getElementById(id);
+        if (labelledEl) {
+          const text = (labelledEl.innerText || labelledEl.textContent || '').trim();
+          if (text && text !== '*') parts.push(text);
+        }
       }
+      if (parts.length > 0) return parts.join(' ');
+    }
+
+    // 5. Question Item Container (Google Forms, Microsoft Forms, Typeform, Bootstrap, Webflow)
+    const questionItem = el.closest('[role="listitem"], .geS5n, .Qr7Oae, .office-form-question, .form-group, .field, fieldset, tr');
+    if (questionItem) {
+      const heading = questionItem.querySelector('[role="heading"], .M7eMe, .HoFdK, .office-form-question-title, legend, .question-title, .form-label, .control-label');
+      if (heading) {
+        const text = (heading.innerText || heading.textContent || '').trim();
+        if (text) return text;
+      }
+    }
+
+    // 6. aria-describedby
+    const ariaDescribedBy = el.getAttribute('aria-describedby');
+    if (ariaDescribedBy) {
+      const descEl = document.getElementById(ariaDescribedBy);
+      if (descEl) {
+        const text = (descEl.innerText || descEl.textContent || '').trim();
+        if (text) return text;
+      }
+    }
+
+    // 7. Preceding sibling label or heading
+    let prev = el.previousElementSibling;
+    while (prev) {
+      if (/^(label|h1|h2|h3|h4|h5|h6|p|div|span)$/i.test(prev.tagName)) {
+        const text = (prev.innerText || prev.textContent || '').trim();
+        if (text && text.length < 100) return text;
+      }
+      prev = prev.previousElementSibling;
     }
 
     return '';
@@ -428,11 +471,18 @@
         if (!matched && el.options.length > 0) {
           el.value = value;
         }
+        el.dispatchEvent(new Event('input', { bubbles: true, cancelable: true }));
+        el.dispatchEvent(new Event('change', { bubbles: true, cancelable: true }));
       } else {
-        // Unconditionally assign value directly first
+        // Focus first so Google Forms/material design active state triggers
+        if (typeof el.focus === 'function') {
+          try { el.focus(); } catch (e) {}
+        }
+
+        // Direct value assignment
         el.value = value;
 
-        // Safely invoke prototype descriptor setter if available for SPA frameworks
+        // Prototype descriptor setter for React / Vue / Angular / Polymer
         try {
           const proto = tag === 'textarea' ? window.HTMLTextAreaElement.prototype : window.HTMLInputElement.prototype;
           const desc = Object.getOwnPropertyDescriptor(proto, 'value');
@@ -440,12 +490,20 @@
             desc.set.call(el, value);
           }
         } catch (e) {
-          // Ignore any Firefox Xray wrapper descriptor restriction
+          // Ignore Firefox Xray wrapper descriptor restriction
+        }
+
+        // Complete event sequence: input, change, and key events
+        el.dispatchEvent(new Event('input', { bubbles: true, cancelable: true }));
+        el.dispatchEvent(new Event('change', { bubbles: true, cancelable: true }));
+        el.dispatchEvent(new KeyboardEvent('keydown', { bubbles: true, cancelable: true, key: ' ' }));
+        el.dispatchEvent(new KeyboardEvent('keyup', { bubbles: true, cancelable: true, key: ' ' }));
+
+        // Blur so floating labels animate to filled state
+        if (typeof el.blur === 'function') {
+          try { el.blur(); } catch (e) {}
         }
       }
-
-      el.dispatchEvent(new Event('input', { bubbles: true, cancelable: true }));
-      el.dispatchEvent(new Event('change', { bubbles: true, cancelable: true }));
     } catch (err) {
       console.warn('[FormMemory] Error in setFieldValue:', err);
     }
@@ -949,8 +1007,8 @@
     // Personal
     { key: 'firstName', regex: /first.?name|fname|given.?name/i },
     { key: 'lastName', regex: /last.?name|lname|surname|family.?name/i },
-    { key: 'fullName', regex: /full.?name|your.?name|candidate.?name|^name$/i },
-    { key: 'email', regex: /email|e-mail/i },
+    { key: 'fullName', regex: /full.?name|your.?name|candidate.?name|student.?name|applicant.?name|^name$/i },
+    { key: 'email', regex: /email|e-mail|mail.?id/i },
     { key: 'phone', regex: /phone|mobile|cell|contact.?number|telephone/i },
     { key: 'gender', regex: /gender|pronoun|sex/i },
 
@@ -964,7 +1022,7 @@
 
     // Professional & Experience
     { key: 'company', regex: /current.?company|company.?name|employer|organization/i },
-    { key: 'jobTitle', regex: /job.?title|current.?title|current.?role|designation|headline/i },
+    { key: 'jobTitle', regex: /job.?title|current.?title|current.?role|designation|headline|apply.?for|position.?applied|role.?applied/i },
     { key: 'experienceYears', regex: /years.?of.?experience|experience.?years|total.?experience|work.?experience/i },
     { key: 'noticePeriod', regex: /notice.?period|availability|available.?in/i },
     { key: 'currentSalary', regex: /current.?(salary|ctc|pay|compensation)/i },
@@ -973,12 +1031,15 @@
     { key: 'workMode', regex: /work.?mode|work.?type|remote.?preference|location.?preference/i },
 
     // Education & Academics
+    { key: 'rollNo', regex: /roll.?(no|number)|registration.?(no|number)|student.?(id|no|number)|enrollment.?(no|number)/i },
     { key: 'university', regex: /university|college|school|institution/i },
-    { key: 'degree', regex: /degree|highest.?education|qualification/i },
-    { key: 'major', regex: /major|field.?of.?study|specialization|discipline/i },
+    { key: 'tenthMarks', regex: /10th|tenth|ssc|matric/i },
+    { key: 'twelfthMarks', regex: /12th|twelfth|hsc|inter|intermediate|senior.?secondary/i },
+    { key: 'degree', regex: /degree|highest.?education|qualification|course.?name|course|branch|stream|discipline/i },
+    { key: 'major', regex: /major|field.?of.?study|specialization/i },
     { key: 'gradYear', regex: /graduation.?year|grad.?year|completion.?year|end.?year/i },
     { key: 'gpaScale', regex: /scale|out.?of|max.?(gpa|cgpa|marks|score)/i },
-    { key: 'gpa', regex: /gpa|cgpa|percentage|grades/i },
+    { key: 'gpa', regex: /graduation.?%|grad.?%|degree.?%|college.?%|cgpa|gpa|percentage|grades|\b%\b/i },
 
     // Links & Social
     { key: 'linkedin', regex: /linkedin|linked.?in/i },
@@ -986,7 +1047,8 @@
     { key: 'portfolio', regex: /portfolio|personal.?site|website|web.?page|blog/i },
     { key: 'twitter', regex: /twitter|x.?handle|x.?profile/i },
 
-    // Work Eligibility & Screening
+    // Work Eligibility, Consent & Screening
+    { key: 'terms', regex: /terms|condition|agreement|ready.?with/i },
     { key: 'workAuthorization', regex: /authorized.?to.?work|work.?authorization|eligible.?to.?work/i },
     { key: 'visaSponsorship', regex: /sponsorship|visa.?sponsorship|require.?sponsorship/i },
     { key: 'veteranStatus', regex: /veteran/i },
@@ -999,6 +1061,23 @@
   ];
 
   /**
+   * Match a signature/text string against job field rules.
+   */
+  function matchJobFieldKeyFromSignature(signature) {
+    if (!signature) return null;
+    for (const rule of JOB_FIELD_RULES) {
+      if (rule.regex.test(signature)) {
+        // Special case: don't confuse firstName or lastName with fullName
+        if (rule.key === 'fullName' && /(first|last)/i.test(signature)) continue;
+        // Special case: don't confuse address line 1 with line 2
+        if (rule.key === 'address' && /(line.?2|apt|suite|unit)/i.test(signature)) continue;
+        return rule.key;
+      }
+    }
+    return null;
+  }
+
+  /**
    * Match an element to a job profile field key.
    */
   function matchJobFieldKey(el) {
@@ -1009,7 +1088,7 @@
     const label = getAssociatedLabelText(el);
     const type = (el.getAttribute('type') || '').toLowerCase();
 
-    const signature = `${name} ${id} ${placeholder} ${aria} ${label}`.trim();
+    const signature = `${label} ${name} ${id} ${placeholder} ${aria}`.trim();
 
     if (type === 'email' && !/company.?email/i.test(signature)) {
       return 'email';
@@ -1018,17 +1097,7 @@
       return 'phone';
     }
 
-    for (const rule of JOB_FIELD_RULES) {
-      if (rule.regex.test(signature)) {
-        // Special case: don't confuse firstName or lastName with fullName
-        if (rule.key === 'fullName' && /(first|last)/i.test(signature)) continue;
-        // Special case: don't confuse address line 1 with line 2
-        if (rule.key === 'address' && /(line.?2|apt|suite|unit)/i.test(signature)) continue;
-        return rule.key;
-      }
-    }
-
-    return null;
+    return matchJobFieldKeyFromSignature(signature);
   }
 
   /**
@@ -1161,7 +1230,27 @@
       return str;
     }
 
-    // 9. Full Name vs First/Last Name fallback
+    // 9. 10th & 12th Marks / Percentage
+    if (key === 'tenthMarks' || key === 'twelfthMarks') {
+      const slashMatch = str.match(/^([\d.]+)\s*\/\s*[\d.]+/);
+      if (slashMatch) return slashMatch[1];
+      const pctMatch = str.match(/^([\d.]+)\s*%/);
+      if (pctMatch) return isNumberField ? pctMatch[1] : str;
+      const numMatch = str.match(/^[\d.]+/);
+      return isNumberField && numMatch ? numMatch[0] : str;
+    }
+
+    // 10. Roll No / Student ID
+    if (key === 'rollNo') {
+      return str;
+    }
+
+    // 11. Terms & Conditions
+    if (key === 'terms') {
+      return str || 'YES';
+    }
+
+    // 12. Full Name vs First/Last Name fallback
     if (key === 'fullName') {
       return str || `${profile.firstName || ''} ${profile.lastName || ''}`.trim();
     }
@@ -1177,6 +1266,107 @@
   }
 
   /**
+   * Autofill custom radio groups (Google Forms, Microsoft Forms, custom accessible components).
+   */
+  function autofillCustomRadioGroups(profile) {
+    const groups = document.querySelectorAll('[role="radiogroup"], .docssharedWizToggleLabeledContainerGroup, .geS5n, .Qr7Oae');
+    let filled = 0;
+
+    groups.forEach(group => {
+      const radios = group.querySelectorAll('[role="radio"]');
+      if (radios.length === 0) return;
+
+      let title = getAssociatedLabelText(group);
+      if (!title) {
+        const heading = group.querySelector('[role="heading"], .M7eMe, .HoFdK, legend, .title');
+        if (heading) title = (heading.innerText || heading.textContent || '').trim();
+      }
+      if (!title) {
+        const parent = group.closest('[role="listitem"], .geS5n, .Qr7Oae');
+        if (parent) {
+          const heading = parent.querySelector('[role="heading"], .M7eMe, .HoFdK, legend, .title');
+          if (heading) title = (heading.innerText || heading.textContent || '').trim();
+        }
+      }
+
+      if (!title) return;
+      const key = matchJobFieldKeyFromSignature(title);
+      if (!key) return;
+
+      let val = profile[key];
+      if ((key === 'terms' || /terms|condition|agreement|ready.?with/i.test(title)) && !val) {
+        val = 'YES';
+      }
+      if (!val) return;
+
+      const targetStr = String(val).trim().toLowerCase();
+
+      for (const r of radios) {
+        const ariaLabel = (r.getAttribute('aria-label') || '').trim().toLowerCase();
+        const rText = (r.innerText || r.textContent || '').trim().toLowerCase();
+        const optionLabel = `${ariaLabel} ${rText}`.trim();
+
+        const isMatch = optionLabel === targetStr ||
+          optionLabel.includes(targetStr) ||
+          targetStr.includes(optionLabel) ||
+          (targetStr === 'yes' && (optionLabel.startsWith('yes') || optionLabel === 'y')) ||
+          (targetStr === 'male' && optionLabel.startsWith('male')) ||
+          (targetStr === 'female' && optionLabel.startsWith('female'));
+
+        if (isMatch) {
+          r.click();
+          r.dispatchEvent(new Event('change', { bubbles: true }));
+          filled++;
+          break;
+        }
+      }
+    });
+
+    return filled;
+  }
+
+  /**
+   * Autofill custom dropdowns (Google Forms listbox, custom UI dropdowns).
+   */
+  function autofillCustomDropdowns(profile) {
+    const listboxes = document.querySelectorAll('[role="listbox"], .quantumWizMenuPaperselectEl');
+    let filled = 0;
+
+    listboxes.forEach(lb => {
+      let title = getAssociatedLabelText(lb);
+      if (!title) {
+        const parent = lb.closest('[role="listitem"], .geS5n, .Qr7Oae');
+        if (parent) {
+          const heading = parent.querySelector('[role="heading"], .M7eMe, .HoFdK, legend, .title');
+          if (heading) title = (heading.innerText || heading.textContent || '').trim();
+        }
+      }
+
+      if (!title) return;
+      const key = matchJobFieldKeyFromSignature(title);
+      if (!key) return;
+
+      let val = profile[key];
+      if ((key === 'terms' || /terms|condition|agreement|ready.?with/i.test(title)) && !val) val = 'YES';
+      if (!val) return;
+
+      const targetStr = String(val).trim().toLowerCase();
+
+      const options = lb.querySelectorAll('[role="option"], .exportSelectPopup .quantumWizMenuPaperselectOption');
+      for (const opt of options) {
+        const optText = (opt.getAttribute('data-value') || opt.innerText || opt.textContent || '').trim().toLowerCase();
+        if (optText === targetStr || optText.includes(targetStr) || targetStr.includes(optText)) {
+          opt.click();
+          filled++;
+          return;
+        }
+      }
+    });
+
+    return filled;
+  }
+
+  /**
    * Autofill all matching job application fields on the page.
    */
   async function autofillJobApplication() {
@@ -1188,9 +1378,10 @@
       return;
     }
 
-    const fields = document.querySelectorAll('input, textarea, select');
     let filledCount = 0;
 
+    // 1. Standard input, textarea, select
+    const fields = document.querySelectorAll('input, textarea, select');
     fields.forEach(el => {
       if (!isTrackableField(el)) return;
       const key = matchJobFieldKey(el);
@@ -1210,6 +1401,9 @@
         const parts = profile.fullName.trim().split(/\s+/);
         rawValue = parts.length > 1 ? parts.slice(1).join(' ') : '';
       }
+      if (key === 'terms' && !rawValue) {
+        rawValue = 'YES';
+      }
 
       if (rawValue !== undefined && rawValue !== null && String(rawValue).trim() !== '') {
         const parsedValue = formatJobValueForField(key, rawValue, el, profile);
@@ -1220,8 +1414,14 @@
       }
     });
 
+    // 2. Custom radio groups (Google Forms, Microsoft Forms)
+    filledCount += autofillCustomRadioGroups(profile);
+
+    // 3. Custom dropdowns (Google Forms listbox)
+    filledCount += autofillCustomDropdowns(profile);
+
     if (filledCount > 0) {
-      showToast(`FormMemory: Autofilled ${filledCount} job application fields!`);
+      showToast(`FormMemory: Autofilled ${filledCount} form fields!`);
     } else {
       showToast('No matching job application fields found.');
     }
@@ -1354,13 +1554,13 @@
     let matchedTotal = 0;
     let hasDistinctiveJobField = false;
 
-    // Specific fields that distinguish a real job application from generic login/contact forms
+    // Specific fields that distinguish a real job / student application from generic login/contact forms
     const DISTINCTIVE_JOB_KEYS = new Set([
       'company', 'jobTitle', 'linkedin', 'github', 'portfolio', 'twitter',
       'experienceYears', 'noticePeriod', 'currentSalary', 'expectedSalary',
-      'university', 'degree', 'major', 'gradYear',
+      'university', 'degree', 'major', 'gradYear', 'rollNo', 'tenthMarks', 'twelfthMarks',
       'workAuthorization', 'visaSponsorship', 'veteranStatus', 'disabilityStatus',
-      'coverLetter', 'skills'
+      'coverLetter', 'skills', 'terms'
     ]);
 
     fields.forEach(el => {
@@ -1375,13 +1575,31 @@
       }
     });
 
-    // Check if the current URL is a known ATS portal or careers page
-    const isJobUrl = /(greenhouse\.io|lever\.co|workday|myworkdayjobs|ashbyhq|bamboohr|smartrecruiters|taleo|icims|jobvite|workable|recruitee|\/apply|\/careers|\/jobs)/i.test(window.location.href);
+    // Also count custom radio groups and dropdowns (Google Forms, Microsoft Forms)
+    const customControls = document.querySelectorAll('[role="radiogroup"], .docssharedWizToggleLabeledContainerGroup, [role="listbox"]');
+    customControls.forEach(cg => {
+      let title = getAssociatedLabelText(cg);
+      if (!title) {
+        const item = cg.closest('[role="listitem"], .geS5n, .Qr7Oae');
+        if (item) {
+          const heading = item.querySelector('[role="heading"], .M7eMe, .HoFdK, legend, .title');
+          if (heading) title = (heading.innerText || heading.textContent || '').trim();
+        }
+      }
+      if (title && matchJobFieldKeyFromSignature(title)) {
+        matchedTotal++;
+        hasDistinctiveJobField = true;
+      }
+    });
 
-    // Strict authentic job portal criteria:
-    // 1. On an ATS / careers domain with at least 2 fields
-    // 2. OR on any page that has at least 1 distinctive job field (e.g. LinkedIn, Portfolio, Work Auth) AND at least 3 fields total
-    const isAuthenticJobPage = (isJobUrl && matchedTotal >= 2) || (hasDistinctiveJobField && matchedTotal >= 3);
+    // Check if the current URL is a known ATS portal, careers page, or forms portal
+    const isJobUrl = /(greenhouse\.io|lever\.co|workday|myworkdayjobs|ashbyhq|bamboohr|smartrecruiters|taleo|icims|jobvite|workable|recruitee|docs\.google\.com\/forms|forms\.gle|forms\.office\.com|typeform\.com|airtable\.com|\/apply|\/careers|\/jobs)/i.test(window.location.href);
+
+    // Also check page text for recruitment/registration context on forms
+    const pageText = (document.title + ' ' + (document.body ? document.body.innerText.slice(0, 1000) : '')).toLowerCase();
+    const hasJobPageText = /(intern|hiring|recruitment|career|job|batch|registration|opening|application|candidate|student|resume|cv)/i.test(pageText);
+
+    const isAuthenticJobPage = (isJobUrl && matchedTotal >= 2) || (hasJobPageText && matchedTotal >= 2) || (hasDistinctiveJobField && matchedTotal >= 2) || (matchedTotal >= 3);
 
     if (!isAuthenticJobPage) {
       return; // Do NOT show on normal login, contact, or search forms!
