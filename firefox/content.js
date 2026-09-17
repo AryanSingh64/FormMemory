@@ -1007,7 +1007,7 @@
     // Personal
     { key: 'firstName', regex: /first.?name|fname|given.?name/i },
     { key: 'lastName', regex: /last.?name|lname|surname|family.?name/i },
-    { key: 'fullName', regex: /full.?name|your.?name|candidate.?name|student.?name|applicant.?name|^name$/i },
+    { key: 'fullName', regex: /(full.?name|your.?name|candidate.?name|student.?name|applicant.?name|customer.?name|client.?name|legal.?name|complete.?name|name.?of.?(the)?.?(student|candidate|applicant|customer|client|individual|person)|\bname\b)/i },
     { key: 'email', regex: /email|e-mail|mail.?id/i },
     { key: 'phone', regex: /phone|mobile|cell|contact.?number|telephone/i },
     { key: 'gender', regex: /gender|pronoun|sex/i },
@@ -1061,15 +1061,52 @@
   ];
 
   /**
-   * Match a signature/text string against job field rules.
+   * Match a signature/text string against job field rules with strict disambiguation.
    */
   function matchJobFieldKeyFromSignature(signature) {
     if (!signature) return null;
+
+    // 1. Explicit First / Last name
+    if (/\b(first.?name|fname|given.?name)\b/i.test(signature)) return 'firstName';
+    if (/\b(last.?name|lname|surname|family.?name)\b/i.test(signature)) return 'lastName';
+
+    // 2. Disambiguate non-person "names" first so they never get confused with applicant name:
+    // e.g. "Full Graduation Course Name", "Write your Course Name" -> degree
+    if (/\b(course|subject|branch|stream|discipline|degree)\b/i.test(signature)) {
+      return 'degree';
+    }
+    // e.g. "Current Company Name", "Employer Name" -> company
+    if (/\b(company|employer|organization|firm|workplace)\b/i.test(signature)) {
+      return 'company';
+    }
+    // e.g. "College / University Name", "School Name", "Institution Name" -> university
+    if (/\b(university|college|school|institution|campus)\b/i.test(signature)) {
+      return 'university';
+    }
+    // e.g. "Father's Name", "Mother's Name", "Guardian Name" -> ignore (do not overwrite with student name)
+    if (/\b(father|mother|parent|guardian|spouse|emergency.?contact)\b/i.test(signature)) {
+      return null;
+    }
+    // e.g. File name, project name, username/login -> ignore
+    if (/\b(file|folder|document|resume|cv|project|domain|user.?name|login|account|bank)\b/i.test(signature)) {
+      return null;
+    }
+
+    // 3. Person full name (Student Name, Customer Name, Client Name, Candidate Name, Applicant Name, Full Name, Your Name, or plain Name)
+    if (/(full.?name|your.?name|candidate.?name|student.?name|applicant.?name|customer.?name|client.?name|legal.?name|complete.?name)/i.test(signature)) {
+      return 'fullName';
+    }
+    if (/name.?of.?(the)?.?(student|candidate|applicant|customer|client|individual|person)/i.test(signature)) {
+      return 'fullName';
+    }
+    if (/\bname\b/i.test(signature)) {
+      return 'fullName';
+    }
+
+    // 4. Run through remaining rules
     for (const rule of JOB_FIELD_RULES) {
+      if (rule.key === 'firstName' || rule.key === 'lastName' || rule.key === 'fullName') continue;
       if (rule.regex.test(signature)) {
-        // Special case: don't confuse firstName or lastName with fullName
-        if (rule.key === 'fullName' && /(first|last)/i.test(signature)) continue;
-        // Special case: don't confuse address line 1 with line 2
         if (rule.key === 'address' && /(line.?2|apt|suite|unit)/i.test(signature)) continue;
         return rule.key;
       }

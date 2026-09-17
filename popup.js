@@ -4,7 +4,75 @@
  */
 
 function initPopup() {
-  const browserAPI = typeof browser !== 'undefined' ? browser : chrome;
+  // Safe storage wrappers supporting both Promise (Firefox) and callback (Chrome) APIs
+  const getStorage = (keys) => {
+    return new Promise((resolve) => {
+      try {
+        if (typeof browser !== 'undefined' && browser.storage && browser.storage.local) {
+          const p = browser.storage.local.get(keys);
+          if (p && typeof p.then === 'function') {
+            return p.then(res => resolve(res || {})).catch(() => resolve({}));
+          }
+        }
+        if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
+          chrome.storage.local.get(keys, (res) => {
+            if (chrome.runtime && chrome.runtime.lastError) {
+              resolve({});
+            } else {
+              resolve(res || {});
+            }
+          });
+          return;
+        }
+        resolve({});
+      } catch (err) {
+        console.warn('[FormMemory Popup] Storage get error:', err);
+        resolve({});
+      }
+    });
+  };
+
+  const setStorage = (items) => {
+    return new Promise((resolve) => {
+      try {
+        if (typeof browser !== 'undefined' && browser.storage && browser.storage.local) {
+          const p = browser.storage.local.set(items);
+          if (p && typeof p.then === 'function') {
+            return p.then(resolve).catch(() => resolve());
+          }
+        }
+        if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
+          chrome.storage.local.set(items, () => resolve());
+          return;
+        }
+        resolve();
+      } catch (err) {
+        console.warn('[FormMemory Popup] Storage set error:', err);
+        resolve();
+      }
+    });
+  };
+
+  const removeStorage = (keys) => {
+    return new Promise((resolve) => {
+      try {
+        if (typeof browser !== 'undefined' && browser.storage && browser.storage.local) {
+          const p = browser.storage.local.remove(keys);
+          if (p && typeof p.then === 'function') {
+            return p.then(resolve).catch(() => resolve());
+          }
+        }
+        if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
+          chrome.storage.local.remove(keys, () => resolve());
+          return;
+        }
+        resolve();
+      } catch (err) {
+        console.warn('[FormMemory Popup] Storage remove error:', err);
+        resolve();
+      }
+    });
+  };
 
   // Tabs
   const tabButtons = document.querySelectorAll('.tab-btn');
@@ -49,6 +117,18 @@ function initPopup() {
   let currentBlacklist = [];
 
   // ----------------------------------------------------
+  // NOTIFICATION HELPER
+  // ----------------------------------------------------
+  function showNotification(msg) {
+    if (statusText) {
+      statusText.textContent = msg;
+      setTimeout(() => {
+        if (statusText) statusText.textContent = 'Stored locally on your device';
+      }, 2500);
+    }
+  }
+
+  // ----------------------------------------------------
   // TAB NAVIGATION
   // ----------------------------------------------------
   tabButtons.forEach(btn => {
@@ -71,7 +151,7 @@ function initPopup() {
   // ----------------------------------------------------
   async function loadJobProfile() {
     try {
-      const data = await browserAPI.storage.local.get('job_profile');
+      const data = await getStorage('job_profile');
       const profile = data.job_profile || {};
 
       jobFieldIds.forEach(id => {
@@ -85,41 +165,69 @@ function initPopup() {
     }
   }
 
-  jobProfileForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const profile = {};
-    jobFieldIds.forEach(id => {
-      const input = document.getElementById(`job_${id}`);
-      if (input) profile[id] = input.value.trim();
-    });
+  if (jobProfileForm) {
+    jobProfileForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const profile = {};
+      jobFieldIds.forEach(id => {
+        const input = document.getElementById(`job_${id}`);
+        if (input) profile[id] = input.value.trim();
+      });
 
-    try {
-      await browserAPI.storage.local.set({ job_profile: profile });
-      showNotification('Job Profile saved successfully!');
-    } catch (err) {
-      console.error('[FormMemory Popup] Error saving job profile:', err);
-    }
-  });
+      try {
+        await setStorage({ job_profile: profile });
+        showNotification('Job Profile saved successfully!');
+      } catch (err) {
+        console.error('[FormMemory Popup] Error saving job profile:', err);
+      }
+    });
+  }
 
   // Quick fill button in header
-  quickFillHeaderBtn.addEventListener('click', async () => {
-    try {
-      const [tab] = await browserAPI.tabs.query({ active: true, currentWindow: true });
-      if (tab && tab.id) {
-        await browserAPI.tabs.sendMessage(tab.id, { action: 'TRIGGER_JOB_FILL' });
-        showNotification('Autofill command sent to active tab!');
+  if (quickFillHeaderBtn) {
+    quickFillHeaderBtn.addEventListener('click', async () => {
+      try {
+        const queryTabs = () => new Promise(res => {
+          if (typeof browser !== 'undefined' && browser.tabs && browser.tabs.query) {
+            const p = browser.tabs.query({ active: true, currentWindow: true });
+            if (p && typeof p.then === 'function') return p.then(res).catch(() => res([]));
+          }
+          if (typeof chrome !== 'undefined' && chrome.tabs && chrome.tabs.query) {
+            chrome.tabs.query({ active: true, currentWindow: true }, tabs => res(tabs || []));
+            return;
+          }
+          res([]);
+        });
+
+        const tabs = await queryTabs();
+        if (tabs && tabs[0] && tabs[0].id) {
+          const sendMsg = (tabId, msg) => new Promise(res => {
+            if (typeof browser !== 'undefined' && browser.tabs && browser.tabs.sendMessage) {
+              const p = browser.tabs.sendMessage(tabId, msg);
+              if (p && typeof p.then === 'function') return p.then(res).catch(() => res(null));
+            }
+            if (typeof chrome !== 'undefined' && chrome.tabs && chrome.tabs.sendMessage) {
+              chrome.tabs.sendMessage(tabId, msg, res);
+              return;
+            }
+            res(null);
+          });
+
+          await sendMsg(tabs[0].id, { action: 'TRIGGER_JOB_FILL' });
+          showNotification('Autofill command sent to active tab!');
+        }
+      } catch (err) {
+        showNotification('Could not autofill current tab');
       }
-    } catch (err) {
-      showNotification('Could not autofill current tab');
-    }
-  });
+    });
+  }
 
   // ----------------------------------------------------
   // SAVED SITES LOGIC
   // ----------------------------------------------------
   async function loadSitesData() {
     try {
-      const allItems = await browserAPI.storage.local.get(null);
+      const allItems = await getStorage(null);
       sitesData = [];
 
       for (const [key, value] of Object.entries(allItems)) {
@@ -129,21 +237,20 @@ function initPopup() {
           const fieldKeys = Object.keys(fields).filter(k => k !== '_credentials');
           let totalEntries = 0;
 
-          fieldKeys.forEach(f => {
-            if (Array.isArray(fields[f])) {
-              totalEntries += fields[f].length;
+          fieldKeys.forEach(fk => {
+            if (Array.isArray(fields[fk])) {
+              totalEntries += fields[fk].length;
             }
           });
 
-          if (Array.isArray(fields._credentials)) {
-            totalEntries += fields._credentials.length;
-          }
+          const hasCredentials = Boolean(fields._credentials && (fields._credentials.username || fields._credentials.password));
 
           sitesData.push({
-            storageKey: key,
             hostname,
+            storageKey: key,
             fieldCount: fieldKeys.length,
-            entryCount: totalEntries
+            totalEntries,
+            hasCredentials
           });
         }
       }
@@ -151,52 +258,52 @@ function initPopup() {
       sitesData.sort((a, b) => a.hostname.localeCompare(b.hostname));
       renderSitesList();
     } catch (err) {
-      console.error('[FormMemory Popup] Failed to load site data:', err);
+      console.error('[FormMemory Popup] Error loading sites data:', err);
     }
   }
 
   function renderSitesList() {
-    const query = (searchInput.value || '').trim().toLowerCase();
-    const filtered = sitesData.filter(s => s.hostname.toLowerCase().includes(query));
-
+    if (!sitesList) return;
     sitesList.innerHTML = '';
+    const query = (searchInput ? searchInput.value : '').toLowerCase().trim();
 
-    if (sitesData.length === 0) {
-      emptyState.style.display = 'block';
-      clearAllBtn.style.display = 'none';
-      return;
-    }
-
-    emptyState.style.display = 'none';
-    clearAllBtn.style.display = 'block';
+    const filtered = sitesData.filter(site => site.hostname.toLowerCase().includes(query));
 
     if (filtered.length === 0) {
-      const noMatch = document.createElement('div');
-      noMatch.className = 'empty-state';
-      noMatch.style.display = 'block';
-      noMatch.textContent = 'No matching sites found.';
-      sitesList.appendChild(noMatch);
+      if (emptyState) {
+        emptyState.style.display = 'block';
+        emptyState.textContent = query ? 'No matching sites found.' : 'No saved form data yet.';
+      }
       return;
     }
+
+    if (emptyState) emptyState.style.display = 'none';
 
     filtered.forEach(site => {
       const li = document.createElement('li');
-      li.className = 'site-row';
+      li.className = 'site-item';
 
       const info = document.createElement('div');
       info.className = 'site-info';
 
-      const hostnameEl = document.createElement('span');
-      hostnameEl.className = 'site-hostname';
-      hostnameEl.textContent = site.hostname;
-      hostnameEl.title = site.hostname;
+      const hostSpan = document.createElement('span');
+      hostSpan.className = 'site-host';
+      hostSpan.textContent = site.hostname;
+      info.appendChild(hostSpan);
 
-      const metaEl = document.createElement('span');
-      metaEl.className = 'site-meta';
-      metaEl.textContent = `${site.fieldCount} fields · ${site.entryCount} values`;
+      const meta = document.createElement('div');
+      meta.className = 'site-meta';
+      meta.textContent = `${site.fieldCount} fields (${site.totalEntries} entries)`;
 
-      info.appendChild(hostnameEl);
-      info.appendChild(metaEl);
+      if (site.hasCredentials) {
+        const credBadge = document.createElement('span');
+        credBadge.className = 'badge';
+        credBadge.style.fontSize = '10px';
+        credBadge.style.marginLeft = '6px';
+        credBadge.textContent = 'Auth Saved';
+        meta.appendChild(credBadge);
+      }
+      info.appendChild(meta);
 
       const clearBtn = document.createElement('button');
       clearBtn.className = 'btn btn-subtle';
@@ -205,7 +312,7 @@ function initPopup() {
 
       clearBtn.addEventListener('click', async () => {
         try {
-          await browserAPI.storage.local.remove(site.storageKey);
+          await removeStorage(site.storageKey);
           sitesData = sitesData.filter(s => s.storageKey !== site.storageKey);
           renderSitesList();
           showNotification(`Cleared ${site.hostname}`);
@@ -220,30 +327,34 @@ function initPopup() {
     });
   }
 
-  clearAllBtn.addEventListener('click', async () => {
-    if (sitesData.length === 0) return;
-    const confirmClear = confirm('Are you sure you want to clear all stored form memory across all sites?');
-    if (!confirmClear) return;
+  if (clearAllBtn) {
+    clearAllBtn.addEventListener('click', async () => {
+      if (sitesData.length === 0) return;
+      const confirmClear = confirm('Are you sure you want to clear all stored form memory across all sites?');
+      if (!confirmClear) return;
 
-    try {
-      const keysToRemove = sitesData.map(s => s.storageKey);
-      await browserAPI.storage.local.remove(keysToRemove);
-      sitesData = [];
-      renderSitesList();
-      showNotification('All saved site data cleared');
-    } catch (err) {
-      console.error('[FormMemory Popup] Failed to clear all:', err);
-    }
-  });
+      try {
+        const keysToRemove = sitesData.map(s => s.storageKey);
+        await removeStorage(keysToRemove);
+        sitesData = [];
+        renderSitesList();
+        showNotification('All saved site data cleared');
+      } catch (err) {
+        console.error('[FormMemory Popup] Failed to clear all:', err);
+      }
+    });
+  }
 
-  searchInput.addEventListener('input', renderSitesList);
+  if (searchInput) {
+    searchInput.addEventListener('input', renderSitesList);
+  }
 
   // ----------------------------------------------------
   // BLACKLIST LOGIC
   // ----------------------------------------------------
   async function loadBlacklist() {
     try {
-      const data = await browserAPI.storage.local.get('blacklist');
+      const data = await getStorage('blacklist');
       currentBlacklist = data.blacklist || [];
       renderBlacklist();
     } catch (err) {
@@ -252,6 +363,7 @@ function initPopup() {
   }
 
   function renderBlacklist() {
+    if (!blackclassList) return;
     blackclassList.innerHTML = '';
     if (currentBlacklist.length === 0) {
       blackclassList.innerHTML = '<li style="font-size:11px; color:var(--text-secondary);">No blacklisted sites.</li>';
@@ -265,7 +377,7 @@ function initPopup() {
 
       tag.querySelector('.tag-close').addEventListener('click', async () => {
         currentBlacklist = currentBlacklist.filter(d => d !== domain);
-        await browserAPI.storage.local.set({ blacklist: currentBlacklist });
+        await setStorage({ blacklist: currentBlacklist });
         renderBlacklist();
         showNotification(`Removed ${domain} from blacklist`);
       });
@@ -274,83 +386,79 @@ function initPopup() {
     });
   }
 
-  addBlacklistBtn.addEventListener('click', async () => {
-    const val = (blacklistInput.value || '').trim().toLowerCase();
-    if (!val) return;
-    const domain = val.replace(/^https?:\/\//, '').replace(/\/.*$/, '');
+  if (addBlacklistBtn && blacklistInput) {
+    addBlacklistBtn.addEventListener('click', async () => {
+      const val = (blacklistInput.value || '').trim().toLowerCase();
+      if (!val) return;
+      const domain = val.replace(/^https?:\/\//, '').replace(/\/.*$/, '');
 
-    if (!currentBlacklist.includes(domain)) {
-      currentBlacklist.push(domain);
-      await browserAPI.storage.local.set({ blacklist: currentBlacklist });
-      blacklistInput.value = '';
-      renderBlacklist();
-      showNotification(`Added ${domain} to blacklist`);
-    }
-  });
+      if (!currentBlacklist.includes(domain)) {
+        currentBlacklist.push(domain);
+        await setStorage({ blacklist: currentBlacklist });
+        blacklistInput.value = '';
+        renderBlacklist();
+        showNotification(`Added ${domain} to blacklist`);
+      }
+    });
+  }
 
   // ----------------------------------------------------
   // BACKUP & RESTORE (EXPORT / IMPORT JSON)
   // ----------------------------------------------------
-  exportBtn.addEventListener('click', async () => {
-    try {
-      const allData = await browserAPI.storage.local.get(null);
-      const jsonStr = JSON.stringify(allData, null, 2);
-      const blob = new Blob([jsonStr], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `formmemory-backup-${new Date().toISOString().slice(0, 10)}.json`;
-      a.click();
-      URL.revokeObjectURL(url);
-      showNotification('Backup downloaded successfully!');
-    } catch (err) {
-      console.error('[FormMemory Popup] Export failed:', err);
-      showNotification('Export failed');
-    }
-  });
-
-  importFileInput.addEventListener('change', (e) => {
-    const file = e.target.files && e.target.files[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = async (event) => {
+  if (exportBtn) {
+    exportBtn.addEventListener('click', async () => {
       try {
-        const importedData = JSON.parse(event.target.result);
-        if (typeof importedData !== 'object') throw new Error('Invalid JSON');
+        const allData = await getStorage(null);
+        const jsonStr = JSON.stringify(allData, null, 2);
+        const blob = new Blob([jsonStr], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
 
-        await browserAPI.storage.local.set(importedData);
-        showNotification('Backup restored successfully!');
-        loadJobProfile();
-        loadSitesData();
-        loadBlacklist();
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `formmemory-backup-${new Date().toISOString().slice(0, 10)}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+        showNotification('Backup downloaded successfully!');
       } catch (err) {
-        alert('Failed to import: Invalid JSON backup file.');
+        console.error('[FormMemory Popup] Export failed:', err);
+        showNotification('Export failed');
       }
-    };
-    reader.readAsText(file);
-    importFileInput.value = '';
-  });
+    });
+  }
 
-  // ----------------------------------------------------
-  // NOTIFICATION HELPER
-  // ----------------------------------------------------
-  function showNotification(msg) {
-    statusText.textContent = msg;
-    setTimeout(() => {
-      statusText.textContent = 'Stored locally on your device';
-    }, 2500);
+  if (importFileInput) {
+    importFileInput.addEventListener('change', (e) => {
+      const file = e.target.files && e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = async (event) => {
+        try {
+          const importedData = JSON.parse(event.target.result);
+          if (typeof importedData !== 'object') throw new Error('Invalid JSON');
+
+          await setStorage(importedData);
+          showNotification('Backup restored successfully!');
+          loadJobProfile();
+          loadSitesData();
+          loadBlacklist();
+        } catch (err) {
+          alert('Failed to import: Invalid JSON backup file.');
+        }
+      };
+      reader.readAsText(file);
+      importFileInput.value = '';
+    });
   }
 
   // Floating button preference
   const showJobPillCheckbox = document.getElementById('showJobPillCheckbox');
   if (showJobPillCheckbox) {
-    browserAPI.storage.local.get('show_job_pill').then(data => {
-      showJobPillCheckbox.checked = data.show_job_pill !== false;
+    getStorage('show_job_pill').then(data => {
+      showJobPillCheckbox.checked = data && data.show_job_pill !== false;
     });
-    showJobPillCheckbox.addEventListener('change', () => {
-      browserAPI.storage.local.set({ show_job_pill: showJobPillCheckbox.checked });
+    showJobPillCheckbox.addEventListener('change', async () => {
+      await setStorage({ show_job_pill: showJobPillCheckbox.checked });
       showNotification(showJobPillCheckbox.checked ? 'Floating button enabled' : 'Floating button hidden');
     });
   }
