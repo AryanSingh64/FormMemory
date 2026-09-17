@@ -51,7 +51,7 @@ function build() {
   // Base manifest from root
   const baseManifest = JSON.parse(fs.readFileSync(path.join(ROOT_DIR, 'manifest.json'), 'utf8'));
 
-  // 1. FIREFOX MANIFEST (Manifest V3 with background scripts + gecko ID)
+  // 1. FIREFOX MANIFEST (Manifest V3 with background scripts + gecko ID + data collection consent)
   const firefoxManifest = {
     ...baseManifest,
     background: {
@@ -60,7 +60,10 @@ function build() {
     browser_specific_settings: {
       gecko: {
         id: 'formmemory@antigravity.local',
-        strict_min_version: '109.0'
+        strict_min_version: '109.0',
+        data_collection_permissions: {
+          required: ['none']
+        }
       }
     }
   };

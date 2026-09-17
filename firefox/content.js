@@ -614,7 +614,9 @@
       if (trackableFormFields.length >= 2) {
         const autofillAction = document.createElement('div');
         autofillAction.className = 'formmemory-dropdown-action';
-        autofillAction.innerHTML = '<span>Autofill Entire Form</span>';
+        const actionSpan = document.createElement('span');
+        actionSpan.textContent = 'Autofill Entire Form';
+        autofillAction.appendChild(actionSpan);
         autofillAction.title = 'Autofill all matching fields in this form from Job Profile & memory';
 
         autofillAction.addEventListener('mousedown', (e) => {
@@ -688,7 +690,7 @@
       // Feature: In-Dropdown Item Deletion ('x')
       const delBtn = document.createElement('button');
       delBtn.className = 'formmemory-item-delete';
-      delBtn.innerHTML = '&times;';
+      delBtn.textContent = '\u00D7';
       delBtn.title = 'Delete this suggestion';
       delBtn.addEventListener('mousedown', (e) => {
         e.preventDefault();
@@ -859,7 +861,7 @@
 
     const closeBtn = document.createElement('button');
     closeBtn.className = 'formmemory-prompt-close';
-    closeBtn.innerHTML = '&times;';
+    closeBtn.textContent = '\u00D7';
     closeBtn.title = 'Dismiss';
     closeBtn.addEventListener('click', dismissPromptBanner);
 
@@ -1536,7 +1538,9 @@
 
     const textWrap = document.createElement('div');
     textWrap.className = 'formmemory-autofill-prompt-text';
-    textWrap.innerHTML = `<span>Autofill ${emptyFields.length} other fields in this form?</span>`;
+    const textSpan = document.createElement('span');
+    textSpan.textContent = `Autofill ${emptyFields.length} other fields in this form?`;
+    textWrap.appendChild(textSpan);
 
     const fillBtn = document.createElement('button');
     fillBtn.className = 'formmemory-autofill-prompt-btn';
@@ -1549,7 +1553,7 @@
 
     const closeBtn = document.createElement('button');
     closeBtn.className = 'formmemory-autofill-prompt-close';
-    closeBtn.innerHTML = '&times;';
+    closeBtn.textContent = '\u00D7';
     closeBtn.title = 'Dismiss';
     closeBtn.addEventListener('click', () => {
       banner.remove();
@@ -1647,7 +1651,14 @@
 
     const btn = document.createElement('button');
     btn.className = 'formmemory-job-pill-btn';
-    btn.innerHTML = `<span>Fill Job App</span> <span class="formmemory-job-pill-badge">${matchedTotal} fields</span>`;
+    const btnLabel = document.createElement('span');
+    btnLabel.textContent = 'Fill Job App';
+    const btnBadge = document.createElement('span');
+    btnBadge.className = 'formmemory-job-pill-badge';
+    btnBadge.textContent = `${matchedTotal} fields`;
+    btn.appendChild(btnLabel);
+    btn.appendChild(document.createTextNode(' '));
+    btn.appendChild(btnBadge);
     btn.title = '1-Click Autofill Job Application (Alt+Shift+J)';
     btn.addEventListener('click', () => {
       autofillJobApplication();
@@ -1655,7 +1666,7 @@
 
     const closeBtn = document.createElement('button');
     closeBtn.className = 'formmemory-job-pill-close';
-    closeBtn.innerHTML = '&times;';
+    closeBtn.textContent = '\u00D7';
     closeBtn.title = 'Dismiss for this page';
     closeBtn.addEventListener('click', (e) => {
       e.stopPropagation();

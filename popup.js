@@ -264,7 +264,7 @@ function initPopup() {
 
   function renderSitesList() {
     if (!sitesList) return;
-    sitesList.innerHTML = '';
+    sitesList.textContent = '';
     const query = (searchInput ? searchInput.value : '').toLowerCase().trim();
 
     const filtered = sitesData.filter(site => site.hostname.toLowerCase().includes(query));
@@ -364,18 +364,32 @@ function initPopup() {
 
   function renderBlacklist() {
     if (!blackclassList) return;
-    blackclassList.innerHTML = '';
+    blackclassList.textContent = '';
     if (currentBlacklist.length === 0) {
-      blackclassList.innerHTML = '<li style="font-size:11px; color:var(--text-secondary);">No blacklisted sites.</li>';
+      const emptyLi = document.createElement('li');
+      emptyLi.style.fontSize = '11px';
+      emptyLi.style.color = 'var(--text-secondary)';
+      emptyLi.textContent = 'No blacklisted sites.';
+      blackclassList.appendChild(emptyLi);
       return;
     }
 
     currentBlacklist.forEach(domain => {
       const tag = document.createElement('li');
       tag.className = 'tag-item';
-      tag.innerHTML = `<span>${domain}</span><span class="tag-close" title="Remove">&times;</span>`;
 
-      tag.querySelector('.tag-close').addEventListener('click', async () => {
+      const domainSpan = document.createElement('span');
+      domainSpan.textContent = domain;
+
+      const closeSpan = document.createElement('span');
+      closeSpan.className = 'tag-close';
+      closeSpan.title = 'Remove';
+      closeSpan.textContent = '\u00D7';
+
+      tag.appendChild(domainSpan);
+      tag.appendChild(closeSpan);
+
+      closeSpan.addEventListener('click', async () => {
         currentBlacklist = currentBlacklist.filter(d => d !== domain);
         await setStorage({ blacklist: currentBlacklist });
         renderBlacklist();
