@@ -277,11 +277,15 @@
       <div class="form-row">
         <div class="field-half">
           <label for="grad_year">Graduation Year</label>
-          <input type="text" id="grad_year" name="graduation_year" placeholder="e.g. 2024">
+          <input type="number" id="grad_year" name="graduation_year" placeholder="e.g. 2024">
         </div>
         <div class="field-half">
-          <label for="candidate_gpa">GPA / CGPA / %</label>
-          <input type="text" id="candidate_gpa" name="gpa" placeholder="e.g. 8.5 / 10">
+          <label for="candidate_gpa">GPA / CGPA (Score Only)</label>
+          <input type="text" id="candidate_gpa" name="gpa" placeholder="e.g. 5.4">
+        </div>
+        <div class="field-half">
+          <label for="candidate_gpa_scale">GPA Scale (Max)</label>
+          <input type="text" id="candidate_gpa_scale" name="gpa_scale" placeholder="e.g. 10">
         </div>
       </div>
 

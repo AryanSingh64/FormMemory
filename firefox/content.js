@@ -977,6 +977,7 @@
     { key: 'degree', regex: /degree|highest.?education|qualification/i },
     { key: 'major', regex: /major|field.?of.?study|specialization|discipline/i },
     { key: 'gradYear', regex: /graduation.?year|grad.?year|completion.?year|end.?year/i },
+    { key: 'gpaScale', regex: /scale|out.?of|max.?(gpa|cgpa|marks|score)/i },
     { key: 'gpa', regex: /gpa|cgpa|percentage|grades/i },
 
     // Links & Social
@@ -1031,6 +1032,151 @@
   }
 
   /**
+   * Intelligently parses and formats profile values to match the target form element's expected format.
+   * E.g. '5.4/10' -> '5.4' for GPA; '$120k' -> '120000' for numeric salary; '3 years' -> '3' for experience.
+   */
+  function formatJobValueForField(key, rawValue, el, profile = {}) {
+    if (rawValue === undefined || rawValue === null) return '';
+    const str = String(rawValue).trim();
+    if (!str) return '';
+
+    const type = (el.getAttribute('type') || '').toLowerCase();
+    const isNumberField = type === 'number';
+    const label = getAssociatedLabelText(el).toLowerCase();
+    const placeholder = (el.getAttribute('placeholder') || '').toLowerCase();
+    const signature = `${el.name || ''} ${el.id || ''} ${placeholder} ${label}`.toLowerCase();
+
+    // 1. GPA / CGPA / Percentage
+    if (key === 'gpa') {
+      // Handles '5.4/10', '8.5 / 10', '3.8/4.0', '85%', '8.5'
+      const slashMatch = str.match(/^([\d.]+)\s*\/\s*[\d.]+/);
+      if (slashMatch) {
+        return slashMatch[1]; // ALWAYS extract pure score e.g. '5.4', never '5.4/10'
+      }
+      const percentMatch = str.match(/^([\d.]+)\s*%/);
+      if (percentMatch) {
+        return percentMatch[1]; // '85'
+      }
+      const numMatch = str.match(/^[\d.]+/);
+      return numMatch ? numMatch[0] : str;
+    }
+
+    // GPA Scale (if form asks for 'out of' or 'scale')
+    if (key === 'gpaScale') {
+      const gpaStr = String(profile.gpa || str).trim();
+      const slashMatch = gpaStr.match(/^[\d.]+\s*\/\s*([\d.]+)/);
+      if (slashMatch) return slashMatch[1]; // '10' or '4.0'
+      if (gpaStr.includes('%')) return '100';
+      const num = gpaStr.match(/^[\d.]+/);
+      const n = num ? parseFloat(num[0]) : 0;
+      return n <= 4.0 ? '4.0' : (n <= 10.0 ? '10' : '100');
+    }
+
+    // 2. Experience Years
+    if (key === 'experienceYears') {
+      // If user wrote '3 years', '3.5 yrs', '5+ years'
+      const numMatch = str.match(/^([\d.]+)/);
+      if (isNumberField || /years?/i.test(signature) || /experience/i.test(signature)) {
+        return numMatch ? numMatch[1] : str;
+      }
+      return str;
+    }
+
+    // 3. Current & Expected Salary / CTC
+    if (key === 'currentSalary' || key === 'expectedSalary') {
+      if (isNumberField || /in (inr|usd|\$|₹|numbers?)/i.test(signature)) {
+        const inLakhs = /lakh|lpa/i.test(signature);
+        const lpaMatch = str.match(/^([\d.]+)\s*(?:lpa|lakhs?)/i);
+        if (lpaMatch) {
+          return inLakhs ? lpaMatch[1] : String(Math.round(parseFloat(lpaMatch[1]) * 100000));
+        }
+        const kMatch = str.match(/^[^0-9]*([\d.]+)\s*k\b/i);
+        if (kMatch) {
+          return String(Math.round(parseFloat(kMatch[1]) * 1000));
+        }
+        // Strip /year, /annum, /month, /hr before extracting digits
+        let clean = str.replace(/\s*\/\s*(year|yr|mo|month|annum|hr|hour|day).*/i, '');
+        const digitsOnly = clean.replace(/[^0-9.]/g, '');
+        return digitsOnly || str;
+      }
+      return str;
+    }
+
+    // 4. Notice Period
+    if (key === 'noticePeriod') {
+      if (isNumberField || /in days|days/i.test(signature)) {
+        if (/immediate/i.test(str)) return '0';
+        const dayMatch = str.match(/(\d+)\s*days?/i);
+        if (dayMatch) return dayMatch[1];
+        const monthMatch = str.match(/(\d+)\s*months?/i);
+        if (monthMatch) return String(parseInt(monthMatch[1], 10) * 30);
+        const num = str.match(/\d+/);
+        return num ? num[0] : '0';
+      }
+      return str;
+    }
+
+    // 5. Postal / PIN Code
+    if (key === 'postalCode') {
+      if (isNumberField || el.maxLength === 6 || el.maxLength === 5) {
+        return str.replace(/\s+/g, '');
+      }
+      return str;
+    }
+
+    // 6. Phone Number
+    if (key === 'phone') {
+      if (isNumberField) {
+        return str.replace(/\D/g, '');
+      }
+      if (el.maxLength === 10) {
+        const digits = str.replace(/\D/g, '');
+        return digits.length >= 10 ? digits.slice(-10) : digits;
+      }
+      return str;
+    }
+
+    // 7. Social Links (LinkedIn, GitHub, Twitter)
+    if (key === 'linkedin' || key === 'github' || key === 'twitter') {
+      const isUsernameExpected = /username|handle/i.test(signature) || (placeholder.includes('username') && !placeholder.includes('http'));
+      if (isUsernameExpected) {
+        return str.replace(/^https?:\/\/[^/]+\/(in\/)?/, '').replace(/\/$/, '').replace(/^@/, '');
+      }
+      if (type === 'url' && !str.startsWith('http')) {
+        if (key === 'linkedin') return `https://linkedin.com/in/${str.replace(/^@/, '')}`;
+        if (key === 'github') return `https://github.com/${str.replace(/^@/, '')}`;
+        if (key === 'twitter') return `https://x.com/${str.replace(/^@/, '')}`;
+      }
+      return str;
+    }
+
+    // 8. Graduation Year
+    if (key === 'gradYear') {
+      if (isNumberField || /year/i.test(signature)) {
+        const years = str.match(/\b(20\d{2}|19\d{2})\b/g);
+        if (years && years.length > 0) {
+          return years[years.length - 1];
+        }
+      }
+      return str;
+    }
+
+    // 9. Full Name vs First/Last Name fallback
+    if (key === 'fullName') {
+      return str || `${profile.firstName || ''} ${profile.lastName || ''}`.trim();
+    }
+    if (key === 'firstName' && !str && profile.fullName) {
+      return profile.fullName.trim().split(/\s+/)[0];
+    }
+    if (key === 'lastName' && !str && profile.fullName) {
+      const parts = profile.fullName.trim().split(/\s+/);
+      return parts.length > 1 ? parts.slice(1).join(' ') : '';
+    }
+
+    return str;
+  }
+
+  /**
    * Autofill all matching job application fields on the page.
    */
   async function autofillJobApplication() {
@@ -1050,10 +1196,27 @@
       const key = matchJobFieldKey(el);
       if (!key) return;
 
-      const profileValue = profile[key];
-      if (profileValue !== undefined && profileValue !== null && String(profileValue).trim() !== '') {
-        setFieldValue(el, profileValue);
-        filledCount++;
+      let rawValue = profile[key];
+      if (key === 'gpaScale' && !rawValue && profile.gpa) {
+        rawValue = profile.gpa;
+      }
+      if (key === 'fullName' && !rawValue) {
+        rawValue = `${profile.firstName || ''} ${profile.lastName || ''}`.trim();
+      }
+      if (key === 'firstName' && !rawValue && profile.fullName) {
+        rawValue = profile.fullName.trim().split(/\s+/)[0];
+      }
+      if (key === 'lastName' && !rawValue && profile.fullName) {
+        const parts = profile.fullName.trim().split(/\s+/);
+        rawValue = parts.length > 1 ? parts.slice(1).join(' ') : '';
+      }
+
+      if (rawValue !== undefined && rawValue !== null && String(rawValue).trim() !== '') {
+        const parsedValue = formatJobValueForField(key, rawValue, el, profile);
+        if (parsedValue !== undefined && parsedValue !== null && String(parsedValue).trim() !== '') {
+          setFieldValue(el, parsedValue);
+          filledCount++;
+        }
       }
     });
 
@@ -1080,10 +1243,24 @@
       if (el.value && String(el.value).trim() !== '') return;
 
       const jobKey = matchJobFieldKey(el);
-      if (jobKey && profile[jobKey] !== undefined && String(profile[jobKey]).trim() !== '') {
-        setFieldValue(el, profile[jobKey]);
-        filledCount++;
-        return;
+      if (jobKey) {
+        let rawValue = profile[jobKey];
+        if (jobKey === 'gpaScale' && !rawValue && profile.gpa) rawValue = profile.gpa;
+        if (jobKey === 'fullName' && !rawValue) rawValue = `${profile.firstName || ''} ${profile.lastName || ''}`.trim();
+        if (jobKey === 'firstName' && !rawValue && profile.fullName) rawValue = profile.fullName.trim().split(/\s+/)[0];
+        if (jobKey === 'lastName' && !rawValue && profile.fullName) {
+          const parts = profile.fullName.trim().split(/\s+/);
+          rawValue = parts.length > 1 ? parts.slice(1).join(' ') : '';
+        }
+
+        if (rawValue !== undefined && rawValue !== null && String(rawValue).trim() !== '') {
+          const parsed = formatJobValueForField(jobKey, rawValue, el, profile);
+          if (parsed !== undefined && parsed !== null && String(parsed).trim() !== '') {
+            setFieldValue(el, parsed);
+            filledCount++;
+            return;
+          }
+        }
       }
 
       const fieldId = getFieldIdentifier(el);
