@@ -88,15 +88,15 @@ function initPopup() {
     'address', 'addressLine2', 'city', 'state', 'postalCode', 'country',
     // Professional & Experience
     'company', 'jobTitle', 'experienceYears', 'noticePeriod',
-    'currentSalary', 'expectedSalary', 'startDate', 'workMode',
+    'currentSalary', 'expectedSalary', 'startDate', 'workMode', 'relocation',
     // Education & Academics
     'university', 'rollNo', 'degree', 'major', 'gradYear', 'gpa', 'tenthMarks', 'twelfthMarks',
     // Links & Social
     'linkedin', 'github', 'portfolio', 'twitter',
     // Work Eligibility & Screening
-    'workAuthorization', 'visaSponsorship', 'veteranStatus', 'disabilityStatus', 'referralSource', 'terms',
+    'workAuthorization', 'visaSponsorship', 'veteranStatus', 'disabilityStatus', 'ethnicity', 'referralSource', 'terms',
     // Skills & Summary
-    'skills', 'coverLetter'
+    'skills', 'coverLetter', 'whyUs'
   ];
 
   // Sites Elements

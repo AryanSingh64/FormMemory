@@ -134,12 +134,21 @@
             <label>Earliest Start Date</label>
             <input type="text" id="job_startDate" placeholder="Immediately / 2 Weeks">
           </div>
+        <div class="form-row">
           <div class="field-half">
             <label>Preferred Work Mode</label>
             <select id="job_workMode">
               <option value="Remote">Remote</option>
               <option value="Hybrid">Hybrid</option>
               <option value="On-site">On-site</option>
+            </select>
+          </div>
+          <div class="field-half">
+            <label>Willing to Relocate?</label>
+            <select id="job_relocation">
+              <option value="Yes">Yes</option>
+              <option value="Negotiable">Negotiable</option>
+              <option value="No">No</option>
             </select>
           </div>
         </div>
@@ -254,6 +263,18 @@
           </select>
         </div>
 
+        <div class="form-group">
+          <label>Race / Ethnicity (Voluntary EEO Self-ID)</label>
+          <select id="job_ethnicity">
+            <option value="Decline to state">Decline to state / Prefer not to say</option>
+            <option value="Asian">Asian (Indian, Chinese, Japanese, etc.)</option>
+            <option value="White">White / Caucasian</option>
+            <option value="Hispanic or Latino">Hispanic or Latino</option>
+            <option value="Black or African American">Black or African American</option>
+            <option value="Two or More Races">Two or More Races</option>
+          </select>
+        </div>
+
         <!-- 7. Skills & Summary -->
         <div class="section-title">Skills & Summary</div>
         <div class="form-group">
@@ -263,7 +284,12 @@
 
         <div class="form-group">
           <label>Short Cover Letter / Summary</label>
-          <textarea id="job_coverLetter" rows="3" placeholder="Passionate software engineer with expertise in building scalable web applications..."></textarea>
+          <textarea id="job_coverLetter" rows="2" placeholder="Passionate software engineer with expertise in building scalable web applications..."></textarea>
+        </div>
+
+        <div class="form-group">
+          <label>Why do you want to work here? (ATS Pitch)</label>
+          <textarea id="job_whyUs" rows="2" placeholder="I am excited about this role because my technical skills and passion for building high-impact products align directly with your engineering vision..."></textarea>
         </div>
 
         <button type="submit" class="btn btn-primary btn-block">Save Job Profile</button>

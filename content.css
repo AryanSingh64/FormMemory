@@ -234,7 +234,27 @@
   color: var(--formmemory-text);
 }
 
-/* Floating "Fill Job App" Quick-Fill Pill */
+/* Visual confirmation pulse on autofilled fields */
+@keyframes formmemory-field-fill-glow {
+  0% {
+    box-shadow: 0 0 0 0 rgba(35, 134, 54, 0.6);
+    border-color: #2da44e;
+  }
+  50% {
+    box-shadow: 0 0 0 4px rgba(35, 134, 54, 0.3);
+    border-color: #238636;
+    background-color: rgba(46, 160, 67, 0.08);
+  }
+  100% {
+    box-shadow: none;
+  }
+}
+
+.formmemory-field-filled-pulse {
+  animation: formmemory-field-fill-glow 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
+}
+
+/* Floating "Fill Job App" Copilot Pill */
 .formmemory-job-pill {
   position: fixed;
   bottom: 24px;
@@ -245,9 +265,9 @@
   gap: 8px;
   background: var(--formmemory-bg);
   border: 1px solid var(--formmemory-border);
-  box-shadow: var(--formmemory-shadow);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);
   border-radius: 24px;
-  padding: 8px 16px;
+  padding: 8px 14px;
   font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   font-size: 13px;
   font-weight: 600;
@@ -259,7 +279,20 @@
 
 .formmemory-job-pill:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.25);
+}
+
+.formmemory-job-pill-platform {
+  display: inline-flex;
+  align-items: center;
+  background: var(--formmemory-subtle-btn-bg);
+  border: 1px solid var(--formmemory-subtle-btn-border);
+  color: var(--formmemory-text-secondary);
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-weight: 600;
+  letter-spacing: 0.2px;
 }
 
 .formmemory-job-pill-btn {
@@ -278,24 +311,193 @@
   background: var(--formmemory-primary-btn-bg);
   color: #ffffff;
   font-size: 10px;
-  padding: 2px 6px;
-  border-radius: 8px;
+  padding: 2px 7px;
+  border-radius: 10px;
   font-weight: 700;
+}
+
+.formmemory-job-pill-sidebtn {
+  background: none;
+  border: none;
+  color: var(--formmemory-text-secondary);
+  font-size: 12px;
+  cursor: pointer;
+  padding: 2px 4px;
+  border-left: 1px solid var(--formmemory-border);
+  margin-left: 2px;
+  line-height: 1;
+}
+
+.formmemory-job-pill-sidebtn:hover {
+  color: var(--formmemory-text);
 }
 
 .formmemory-job-pill-close {
   background: none;
   border: none;
-  font-size: 14px;
+  font-size: 15px;
   color: var(--formmemory-text-secondary);
   cursor: pointer;
   padding: 0 2px;
   line-height: 1;
-  margin-left: 6px;
 }
 
 .formmemory-job-pill-close:hover {
   color: var(--formmemory-text);
+}
+
+/* In-Page Copilot Side Drawer */
+.formmemory-copilot-drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 360px;
+  max-width: 90vw;
+  height: 100vh;
+  z-index: 2147483646;
+  background: var(--formmemory-bg);
+  border-left: 1px solid var(--formmemory-border);
+  box-shadow: -8px 0 32px rgba(0, 0, 0, 0.25);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  color: var(--formmemory-text);
+  display: flex;
+  flex-direction: column;
+  transform: translateX(100%);
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  box-sizing: border-box;
+}
+
+.formmemory-copilot-drawer.formmemory-drawer-open {
+  transform: translateX(0);
+}
+
+.formmemory-drawer-header {
+  padding: 16px;
+  border-bottom: 1px solid var(--formmemory-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--formmemory-subtle-btn-bg);
+}
+
+.formmemory-drawer-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.formmemory-drawer-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--formmemory-text);
+}
+
+.formmemory-drawer-close {
+  background: none;
+  border: none;
+  font-size: 18px;
+  color: var(--formmemory-text-secondary);
+  cursor: pointer;
+  padding: 4px;
+  line-height: 1;
+}
+
+.formmemory-drawer-close:hover {
+  color: var(--formmemory-text);
+}
+
+.formmemory-drawer-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.formmemory-drawer-detected-info {
+  background: var(--formmemory-subtle-btn-bg);
+  border: 1px solid var(--formmemory-border);
+  border-radius: 8px;
+  padding: 12px;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.formmemory-drawer-detected-title {
+  font-weight: 600;
+  color: var(--formmemory-text);
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.formmemory-drawer-fields-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.formmemory-drawer-field-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px;
+  border-radius: 6px;
+  background: var(--formmemory-subtle-btn-bg);
+  border: 1px solid var(--formmemory-border);
+  font-size: 11px;
+}
+
+.formmemory-drawer-field-label {
+  font-weight: 600;
+  color: var(--formmemory-text-secondary);
+}
+
+.formmemory-drawer-field-val {
+  color: var(--formmemory-text);
+  word-break: break-word;
+}
+
+.formmemory-drawer-footer {
+  padding: 14px 16px;
+  border-top: 1px solid var(--formmemory-border);
+  display: flex;
+  gap: 8px;
+  background: var(--formmemory-subtle-btn-bg);
+}
+
+.formmemory-drawer-action-btn {
+  flex: 1;
+  padding: 10px 14px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid transparent;
+  text-align: center;
+  transition: background 0.15s ease;
+}
+
+.formmemory-drawer-btn-apply {
+  background: var(--formmemory-primary-btn-bg);
+  color: #ffffff;
+}
+
+.formmemory-drawer-btn-apply:hover {
+  background: var(--formmemory-primary-btn-hover);
+}
+
+.formmemory-drawer-btn-secondary {
+  background: var(--formmemory-subtle-btn-bg);
+  border-color: var(--formmemory-subtle-btn-border);
+  color: var(--formmemory-text);
+}
+
+.formmemory-drawer-btn-secondary:hover {
+  background: var(--formmemory-item-hover);
 }
 
 /* Save Form Prompt Banner */

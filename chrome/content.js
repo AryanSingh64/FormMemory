@@ -504,6 +504,14 @@
           try { el.blur(); } catch (e) {}
         }
       }
+
+      // Visual confirmation pulse
+      try {
+        el.classList.add('formmemory-field-filled-pulse');
+        setTimeout(() => {
+          try { el.classList.remove('formmemory-field-filled-pulse'); } catch (e) {}
+        }, 1400);
+      } catch (e) {}
     } catch (err) {
       console.warn('[FormMemory] Error in setFieldValue:', err);
     }
@@ -1031,6 +1039,7 @@
     { key: 'expectedSalary', regex: /expected.?(salary|ctc|pay|compensation)|salary.?expectation|desired.?salary/i },
     { key: 'startDate', regex: /start.?date|earliest.?start|joining.?date|when.?can.?you.?start/i },
     { key: 'workMode', regex: /work.?mode|work.?type|remote.?preference|location.?preference/i },
+    { key: 'relocation', regex: /relocat|willing.?to.?move|willingness.?to.?relocate/i },
 
     // Education & Academics
     { key: 'rollNo', regex: /roll.?(no|number)|registration.?(no|number)|student.?(id|no|number)|enrollment.?(no|number)/i },
@@ -1055,11 +1064,13 @@
     { key: 'visaSponsorship', regex: /sponsorship|visa.?sponsorship|require.?sponsorship/i },
     { key: 'veteranStatus', regex: /veteran/i },
     { key: 'disabilityStatus', regex: /disability/i },
+    { key: 'ethnicity', regex: /ethnicity|race|demographic|equal.?opportunity|eeo/i },
     { key: 'referralSource', regex: /how.?did.?you.?hear|referral.?source|source/i },
 
     // Summary & Skills
     { key: 'skills', regex: /skills|technologies|key.?skills|tech.?stack/i },
-    { key: 'coverLetter', regex: /cover.?letter|summary|about.?yourself|notes/i }
+    { key: 'coverLetter', regex: /cover.?letter|summary|about.?yourself|notes/i },
+    { key: 'whyUs', regex: /why.?(do.?you.?want|are.?you.?interested|us|company)|interest.?in.?(this|the|role|company)|pitch/i }
   ];
 
   /**
@@ -1299,6 +1310,21 @@
     if (key === 'lastName' && !str && profile.fullName) {
       const parts = profile.fullName.trim().split(/\s+/);
       return parts.length > 1 ? parts.slice(1).join(' ') : '';
+    }
+
+    // 13. Relocation & Work Mode
+    if (key === 'relocation') {
+      return str || profile.relocation || 'Yes';
+    }
+
+    // 14. EEO & Ethnicity Voluntary Self-ID
+    if (key === 'ethnicity') {
+      return str || profile.ethnicity || 'Decline to state';
+    }
+
+    // 15. Why Us / ATS Pitch
+    if (key === 'whyUs') {
+      return str || profile.whyUs || profile.coverLetter || '';
     }
 
     return str;
@@ -1576,6 +1602,219 @@
   }
 
   let jobPillDismissed = false;
+  let activeCopilotDrawer = null;
+
+  /**
+   * Detect ATS platform or job portal name based on URL, DOM attributes, or page structure.
+   */
+  function detectATSPlatform() {
+    const host = (window.location.hostname || '').toLowerCase();
+
+    if (host.includes('greenhouse.io') || document.querySelector('#application_form, .greenhouse-form, [data-mapped="greenhouse"]')) {
+      return { name: 'Greenhouse', color: '#00b374' };
+    }
+    if (host.includes('lever.co') || document.querySelector('.lever-form, [data-qa="lever-application"]')) {
+      return { name: 'Lever', color: '#0052cc' };
+    }
+    if (host.includes('workday') || host.includes('myworkdayjobs') || document.querySelector('[data-automation-id*="workday"]')) {
+      return { name: 'Workday', color: '#0062ff' };
+    }
+    if (host.includes('ashbyhq.com') || document.querySelector('[data-ashby-app]')) {
+      return { name: 'Ashby', color: '#7c3aed' };
+    }
+    if (host.includes('wellfound.com') || host.includes('angel.co')) {
+      return { name: 'Wellfound', color: '#ff6154' };
+    }
+    if (host.includes('rippling.com') || document.querySelector('[data-testid*="rippling"]')) {
+      return { name: 'Rippling', color: '#f59e0b' };
+    }
+    if (host.includes('icims.com')) {
+      return { name: 'iCIMS', color: '#0284c7' };
+    }
+    if (host.includes('indeed.com')) {
+      return { name: 'Indeed', color: '#2557a7' };
+    }
+    if (host.includes('smartrecruiters.com')) {
+      return { name: 'SmartRecruiters', color: '#059669' };
+    }
+    if (host.includes('bamboohr.com')) {
+      return { name: 'BambooHR', color: '#10b981' };
+    }
+    if (host.includes('docs.google.com') || host.includes('forms.gle')) {
+      return { name: 'Google Form', color: '#7248b9' };
+    }
+    if (host.includes('forms.office.com')) {
+      return { name: 'Microsoft Form', color: '#008272' };
+    }
+    if (host.includes('typeform.com')) {
+      return { name: 'Typeform', color: '#262627' };
+    }
+    if (host.includes('airtable.com')) {
+      return { name: 'Airtable', color: '#fcb400' };
+    }
+    if (host.includes('handshake') || host.includes('joinhandshake.com')) {
+      return { name: 'Handshake', color: '#ff3e3e' };
+    }
+    if (host.includes('workatastartup.com')) {
+      return { name: 'YC Startup', color: '#ff6600' };
+    }
+
+    return { name: 'Job Form', color: '#0969da' };
+  }
+
+  /**
+   * Open the in-page Copilot side drawer for inspecting and triggering auto-fill.
+   */
+  async function openCopilotDrawer() {
+    if (activeCopilotDrawer) {
+      activeCopilotDrawer.classList.toggle('formmemory-drawer-open');
+      return;
+    }
+
+    const platform = detectATSPlatform();
+    const data = await browserAPI.storage.local.get('job_profile');
+    const profile = data.job_profile || {};
+
+    const drawer = document.createElement('div');
+    drawer.className = 'formmemory-copilot-drawer';
+
+    // 1. Header
+    const header = document.createElement('div');
+    header.className = 'formmemory-drawer-header';
+
+    const titleWrap = document.createElement('div');
+    titleWrap.className = 'formmemory-drawer-title-wrap';
+
+    const title = document.createElement('div');
+    title.className = 'formmemory-drawer-title';
+    title.textContent = 'Auto-Apply Copilot';
+
+    const platformBadge = document.createElement('span');
+    platformBadge.className = 'formmemory-job-pill-platform';
+    platformBadge.textContent = platform.name;
+
+    titleWrap.appendChild(title);
+    titleWrap.appendChild(platformBadge);
+
+    const closeBtn = document.createElement('button');
+    closeBtn.className = 'formmemory-drawer-close';
+    closeBtn.textContent = '\u00D7';
+    closeBtn.title = 'Close Panel';
+    closeBtn.addEventListener('click', () => {
+      drawer.classList.remove('formmemory-drawer-open');
+    });
+
+    header.appendChild(titleWrap);
+    header.appendChild(closeBtn);
+
+    // 2. Content
+    const content = document.createElement('div');
+    content.className = 'formmemory-drawer-content';
+
+    const fields = document.querySelectorAll('input, textarea, select');
+    const detectedItems = [];
+
+    fields.forEach(el => {
+      if (!isTrackableField(el)) return;
+      const key = matchJobFieldKey(el);
+      if (!key) return;
+      const label = getAssociatedLabelText(el) || el.name || el.placeholder || key;
+      let val = profile[key];
+      if (key === 'fullName' && !val) val = `${profile.firstName || ''} ${profile.lastName || ''}`.trim();
+      if (key === 'firstName' && !val && profile.fullName) val = profile.fullName.trim().split(/\s+/)[0];
+      if (key === 'lastName' && !val && profile.fullName) {
+        const parts = profile.fullName.trim().split(/\s+/);
+        val = parts.length > 1 ? parts.slice(1).join(' ') : '';
+      }
+      if (key === 'terms' && !val) val = 'YES';
+      if (key === 'relocation' && !val) val = profile.relocation || 'Yes';
+      if (key === 'ethnicity' && !val) val = profile.ethnicity || 'Decline to state';
+
+      detectedItems.push({ key, label, val: val || '(Not set in profile)' });
+    });
+
+    const infoBox = document.createElement('div');
+    infoBox.className = 'formmemory-drawer-detected-info';
+
+    const infoTitle = document.createElement('div');
+    infoTitle.className = 'formmemory-drawer-detected-title';
+    infoTitle.textContent = `${detectedItems.length} application fields mapped`;
+
+    const infoDesc = document.createElement('div');
+    infoDesc.textContent = 'Auto-detects and fills all standard, screening, and custom ATS fields with your FormMemory profile.';
+
+    infoBox.appendChild(infoTitle);
+    infoBox.appendChild(infoDesc);
+    content.appendChild(infoBox);
+
+    const list = document.createElement('div');
+    list.className = 'formmemory-drawer-fields-list';
+
+    detectedItems.slice(0, 15).forEach(item => {
+      const itemEl = document.createElement('div');
+      itemEl.className = 'formmemory-drawer-field-item';
+
+      const itemLabel = document.createElement('span');
+      itemLabel.className = 'formmemory-drawer-field-label';
+      itemLabel.textContent = item.label;
+
+      const itemVal = document.createElement('span');
+      itemVal.className = 'formmemory-drawer-field-val';
+      itemVal.textContent = item.val;
+
+      itemEl.appendChild(itemLabel);
+      itemEl.appendChild(itemVal);
+      list.appendChild(itemEl);
+    });
+
+    if (detectedItems.length > 15) {
+      const more = document.createElement('div');
+      more.style.fontSize = '11px';
+      more.style.color = 'var(--formmemory-text-secondary)';
+      more.style.textAlign = 'center';
+      more.textContent = `+ ${detectedItems.length - 15} more fields`;
+      list.appendChild(more);
+    }
+
+    content.appendChild(list);
+
+    // 3. Footer
+    const footer = document.createElement('div');
+    footer.className = 'formmemory-drawer-footer';
+
+    const applyBtn = document.createElement('button');
+    applyBtn.className = 'formmemory-drawer-action-btn formmemory-drawer-btn-apply';
+    applyBtn.textContent = 'Auto Apply All';
+    applyBtn.addEventListener('click', () => {
+      autofillJobApplication(profile);
+      drawer.classList.remove('formmemory-drawer-open');
+    });
+
+    const clearBtn = document.createElement('button');
+    clearBtn.className = 'formmemory-drawer-action-btn formmemory-drawer-btn-secondary';
+    clearBtn.textContent = 'Clear Form';
+    clearBtn.addEventListener('click', () => {
+      fields.forEach(el => {
+        if (isTrackableField(el)) el.value = '';
+      });
+      showToast('Form fields cleared');
+    });
+
+    footer.appendChild(applyBtn);
+    footer.appendChild(clearBtn);
+
+    drawer.appendChild(header);
+    drawer.appendChild(content);
+    drawer.appendChild(footer);
+
+    document.body.appendChild(drawer);
+    activeCopilotDrawer = drawer;
+
+    // Slide in smoothly
+    requestAnimationFrame(() => {
+      drawer.classList.add('formmemory-drawer-open');
+    });
+  }
 
   /**
    * Check if the page looks like an authentic job application form and display a floating fill pill.
@@ -1601,7 +1840,7 @@
       'experienceYears', 'noticePeriod', 'currentSalary', 'expectedSalary',
       'university', 'degree', 'major', 'gradYear', 'rollNo', 'tenthMarks', 'twelfthMarks',
       'workAuthorization', 'visaSponsorship', 'veteranStatus', 'disabilityStatus',
-      'coverLetter', 'skills', 'terms'
+      'coverLetter', 'skills', 'terms', 'relocation', 'ethnicity', 'whyUs'
     ]);
 
     fields.forEach(el => {
@@ -1634,7 +1873,7 @@
     });
 
     // Check if the current URL is a known ATS portal, careers page, or forms portal
-    const isJobUrl = /(greenhouse\.io|lever\.co|workday|myworkdayjobs|ashbyhq|bamboohr|smartrecruiters|taleo|icims|jobvite|workable|recruitee|docs\.google\.com\/forms|forms\.gle|forms\.office\.com|typeform\.com|airtable\.com|\/apply|\/careers|\/jobs)/i.test(window.location.href);
+    const isJobUrl = /(greenhouse\.io|lever\.co|workday|myworkdayjobs|ashbyhq|bamboohr|smartrecruiters|taleo|icims|jobvite|workable|recruitee|wellfound\.com|rippling\.com|indeed\.com|joinhandshake\.com|workatastartup\.com|docs\.google\.com\/forms|forms\.gle|forms\.office\.com|typeform\.com|airtable\.com|\/apply|\/careers|\/jobs)/i.test(window.location.href);
 
     // Also check page text for recruitment/registration context on forms
     const pageText = (document.title + ' ' + (document.body ? document.body.innerText.slice(0, 1000) : '')).toLowerCase();
@@ -1646,22 +1885,39 @@
       return; // Do NOT show on normal login, contact, or search forms!
     }
 
+    const platform = detectATSPlatform();
+
     const pill = document.createElement('div');
     pill.className = 'formmemory-job-pill';
+
+    // Platform Badge (Greenhouse, Workday, Google Form, etc.)
+    const platBadge = document.createElement('span');
+    platBadge.className = 'formmemory-job-pill-platform';
+    platBadge.textContent = platform.name;
 
     const btn = document.createElement('button');
     btn.className = 'formmemory-job-pill-btn';
     const btnLabel = document.createElement('span');
-    btnLabel.textContent = 'Fill Job App';
+    btnLabel.textContent = 'Auto Apply';
     const btnBadge = document.createElement('span');
     btnBadge.className = 'formmemory-job-pill-badge';
     btnBadge.textContent = `${matchedTotal} fields`;
     btn.appendChild(btnLabel);
     btn.appendChild(document.createTextNode(' '));
     btn.appendChild(btnBadge);
-    btn.title = '1-Click Autofill Job Application (Alt+Shift+J)';
-    btn.addEventListener('click', () => {
+    btn.title = '1-Click Auto Apply Job Application (Alt+Shift+J)';
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
       autofillJobApplication();
+    });
+
+    const sideBtn = document.createElement('button');
+    sideBtn.className = 'formmemory-job-pill-sidebtn';
+    sideBtn.title = 'Open Copilot Side Panel';
+    sideBtn.textContent = 'Panel';
+    sideBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      openCopilotDrawer();
     });
 
     const closeBtn = document.createElement('button');
@@ -1675,7 +1931,9 @@
       activeJobPill = null;
     });
 
+    pill.appendChild(platBadge);
     pill.appendChild(btn);
+    pill.appendChild(sideBtn);
     pill.appendChild(closeBtn);
     document.body.appendChild(pill);
     activeJobPill = pill;
