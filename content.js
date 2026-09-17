@@ -1184,7 +1184,7 @@
     const btn = document.createElement('button');
     btn.className = 'formmemory-job-pill-btn';
     btn.innerHTML = `<span>Fill Job App</span> <span class="formmemory-job-pill-badge">${matchedTotal} fields</span>`;
-    btn.title = '1-Click Autofill Job Application (Alt+Shift+F)';
+    btn.title = '1-Click Autofill Job Application (Alt+Shift+J)';
     btn.addEventListener('click', () => {
       autofillJobApplication();
     });
@@ -1322,7 +1322,7 @@
       if (activeDropdown) closeDropdown();
     }, { passive: true });
 
-    // Listen for background keyboard shortcut (Alt+Shift+F)
+    // Listen for background keyboard shortcut (Alt+Shift+J)
     browserAPI.runtime.onMessage.addListener((msg) => {
       if (msg && msg.action === 'TRIGGER_JOB_FILL') {
         autofillJobApplication();

@@ -40,7 +40,7 @@
   "commands": {
     "quick_fill_job": {
       "suggested_key": {
-        "default": "Alt+Shift+F"
+        "default": "Alt+Shift+J"
       },
       "description": "Autofill Job Application on current page"
     }

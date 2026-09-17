@@ -11,7 +11,7 @@ browserAPI.runtime.onInstalled.addListener((details) => {
   }
 });
 
-// Keyboard shortcut handler (Alt+Shift+F)
+// Keyboard shortcut handler (Alt+Shift+J)
 browserAPI.commands.onCommand.addListener(async (command) => {
   if (command === 'quick_fill_job') {
     try {
