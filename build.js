@@ -20,8 +20,7 @@ const SHARED_FILES = [
   'icon-16.png',
   'icon-48.png',
   'icon-128.png',
-  'icon.svg',
-  'test_form.html'
+  'icon.svg'
 ];
 
 function ensureDir(dir) {
