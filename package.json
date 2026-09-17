@@ -1,0 +1,24 @@
+{
+  "name": "formmemory",
+  "version": "1.1.0",
+  "description": "Smart local form autofill and job application assistant for Firefox",
+  "main": "background.js",
+  "scripts": {
+    "package": "node package-extension.js",
+    "test:syntax": "node -c background.js content.js popup.js",
+    "push": "git add . && git commit -m \"update FormMemory\" && git push origin main"
+  },
+  "keywords": [
+    "firefox-extension",
+    "autofill",
+    "job-application",
+    "form-filler",
+    "privacy"
+  ],
+  "author": "Aryan Singh",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/AryanSingh64/FormMemory.git"
+  }
+}
